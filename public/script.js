@@ -3037,118 +3037,80 @@ function initTheme() {
   });
 }
 
-// ===== FIREBASE AUTH SYSTEM =====
-function authTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach(function(t) { t.classList.toggle('active', t.dataset.atab === tab); });
-  document.getElementById('auth-login').classList.toggle('hidden', tab !== 'login');
-  document.getElementById('auth-signup').classList.toggle('hidden', tab !== 'signup');
+// ===== FIREBASE AUTH SYSTEM (Phone + Google) =====
+var authConfirmResult = null;
+
+function showAuthStep(step) {
+  document.getElementById('auth-step-methods').classList.toggle('hidden', step !== 'methods');
+  document.getElementById('auth-step-phone').classList.toggle('hidden', step !== 'phone');
+  document.getElementById('auth-step-verify').classList.toggle('hidden', step !== 'verify');
+  var title = document.getElementById('auth-title');
+  var sub = document.getElementById('auth-sub');
+  if (step === 'phone') { title.textContent = 'Phone Sign-In'; sub.textContent = 'Enter your number to receive a code'; }
+  else if (step === 'verify') { title.textContent = 'Verify Code'; sub.textContent = ''; }
+  else { title.textContent = 'Sign in to BASKUG LIFE'; sub.textContent = 'Sync your data across devices'; }
 }
 
-function showAuthError(id, msg) {
-  var el = document.getElementById(id);
+function showAuthError(msg) {
+  var el = document.getElementById('auth-error');
   el.textContent = msg;
   el.style.display = msg ? 'block' : 'none';
 }
 
-function resetAuthBtn(id, text) {
-  var btn = document.getElementById(id);
-  if (btn) { btn.disabled = false; btn.innerHTML = text; }
+function firebasePhoneSignIn() {
+  var codeEl = document.getElementById('auth-phone-code');
+  var phoneEl = document.getElementById('auth-phone-input');
+  var fullPhone = codeEl.value + phoneEl.value.trim();
+
+  if (!phoneEl.value.trim()) { showAuthError('Please enter your phone number.'); return; }
+  showAuthError('');
+
+  var btn = document.getElementById('btn-send-code');
+  btn.disabled = true; btn.textContent = '⏳ Sending code...';
+
+  var verifier = new firebase.auth.RecaptchaVerifier('auth-recaptcha', { size: 'invisible' });
+
+  firebase.auth().signInWithPhoneNumber(fullPhone, verifier)
+    .then(function(confirmationResult) {
+      authConfirmResult = confirmationResult;
+      document.getElementById('auth-phone-display').textContent = fullPhone;
+      showAuthStep('verify');
+      btn.disabled = false; btn.textContent = 'Send Code';
+    })
+    .catch(function(e) {
+      showAuthError(firebaseAuthErrorMessage(e));
+      btn.disabled = false; btn.textContent = 'Send Code';
+      verifier.reset();
+    });
 }
 
-function setAuthBtn(id, text) {
-  var btn = document.getElementById(id);
-  if (btn) { btn.disabled = true; btn.innerHTML = text; }
-}
+function firebaseVerifyCode() {
+  var code = document.getElementById('auth-code-input').value.trim();
+  if (!code) { showAuthError('Please enter the verification code.'); return; }
+  showAuthError('');
 
-function firebaseLogin(email, password) {
-  setAuthBtn('btn-login', '⏳ Signing in...');
-  showAuthError('login-error', '');
-  firebase.auth().signInWithEmailAndPassword(email, password)
+  var btn = document.getElementById('btn-verify-code');
+  btn.disabled = true; btn.textContent = '⏳ Verifying...';
+
+  authConfirmResult.confirm(code)
     .then(function() {
       hideOverlay('view-auth');
     })
     .catch(function(e) {
-      showAuthError('login-error', firebaseAuthErrorMessage(e));
-      resetAuthBtn('btn-login', 'Log In <span class="btn-arrow">→</span>');
+      showAuthError(firebaseAuthErrorMessage(e));
+      btn.disabled = false; btn.textContent = 'Verify';
     });
 }
 
-function firebaseSignup() {
-  setAuthBtn('btn-signup', '⏳ Creating account...');
-  showAuthError('signup-error', '');
-
-  var email = document.getElementById('signup-email').value.trim();
-  var name = document.getElementById('signup-name').value.trim();
-  var phoneEl = document.getElementById('signup-phone');
-  var phoneCodeEl = document.getElementById('signup-phone-code');
-  var fullPhone = (phoneCodeEl && phoneEl && phoneEl.value.trim()) ? phoneCodeEl.value + phoneEl.value.trim() : '';
-  var gender = document.getElementById('signup-gender') ? document.getElementById('signup-gender').value : '';
-  var age = document.getElementById('signup-age') ? document.getElementById('signup-age').value : '';
-  var password = document.getElementById('signup-password').value;
-  var confirmPw = document.getElementById('signup-confirm').value;
-
-  if (!email || !password) {
-    showAuthError('signup-error', 'Email and password are required.');
-    resetAuthBtn('btn-signup', 'Create Account <span class="btn-arrow">→</span>');
-    return;
-  }
-  if (!gender) {
-    showAuthError('signup-error', 'Please select your gender.');
-    resetAuthBtn('btn-signup', 'Create Account <span class="btn-arrow">→</span>');
-    return;
-  }
-  if (password.length < 6) {
-    showAuthError('signup-error', 'Password must be at least 6 characters.');
-    resetAuthBtn('btn-signup', 'Create Account <span class="btn-arrow">→</span>');
-    return;
-  }
-  if (password !== confirmPw) {
-    showAuthError('signup-error', 'Passwords do not match.');
-    resetAuthBtn('btn-signup', 'Create Account <span class="btn-arrow">→</span>');
-    return;
-  }
-
-  firebase.auth().createUserWithEmailAndPassword(email, password)
-    .then(function(cred) {
-      return cred.user.getIdToken().then(function(token) {
-        return fetch('/api/auth/firebase', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: token, name: name, gender: gender, age: age, phone: fullPhone })
-        });
-      });
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.user) {
-        Object.assign(user, data.user);
-        user.heightCm = user.height || '';
-        user.weightKg = user.weight || '';
-        user.phone = user.phone || '';
-        needsProfile = !user.name;
-        localStorage.setItem('baskug_user', JSON.stringify(user));
-      }
-      hideOverlay('view-auth');
-    })
-    .catch(function(e) {
-      showAuthError('signup-error', firebaseAuthErrorMessage(e));
-      resetAuthBtn('btn-signup', 'Create Account <span class="btn-arrow">→</span>');
-    });
-}
-
-function firebaseGoogleSignIn(mode) {
-  var errorId = mode === 'login' ? 'login-error' : 'signup-error';
-  showAuthError(errorId, '');
+function firebaseGoogleSignIn() {
+  showAuthError('');
   var provider = new firebase.auth.GoogleAuthProvider();
   firebase.auth().signInWithPopup(provider)
-    .then(function(result) {
-      if (mode === 'signup') {
-        needsProfile = true;
-      }
+    .then(function() {
       hideOverlay('view-auth');
     })
     .catch(function(e) {
-      showAuthError(errorId, firebaseAuthErrorMessage(e));
+      showAuthError(firebaseAuthErrorMessage(e));
     });
 }
 
@@ -3164,7 +3126,12 @@ function firebaseAuthErrorMessage(e) {
     'auth/too-many-requests': 'Too many attempts. Please try again later.',
     'auth/network-request-failed': 'Network error. Check your connection.',
     'auth/popup-closed-by-user': 'Sign-in cancelled.',
-    'auth/cancelled-popup-request': 'Sign-in cancelled.'
+    'auth/cancelled-popup-request': 'Sign-in cancelled.',
+    'auth/invalid-phone-number': 'Invalid phone number. Please check and try again.',
+    'auth/too-many-requests-phone': 'Too many SMS requests. Please try again later.',
+    'auth/quota-exceeded': 'SMS quota exceeded. Please try again later.',
+    'auth/code-expired': 'Verification code expired. Please request a new one.',
+    'auth/invalid-verification-code': 'Invalid verification code. Please check and try again.'
   };
   return map[code] || e.message || 'Authentication failed.';
 }
@@ -3275,32 +3242,45 @@ document.addEventListener('DOMContentLoaded', function() {
     onFirebaseAuth(user);
   });
 
-  // Show login/signup overlay instead of going straight to setup
+  // Show login/signup overlay
   safeListen('btn-get-started', 'click', function() {
+    showAuthStep('methods');
+    document.getElementById('auth-code-input').value = '';
+    document.getElementById('auth-phone-input').value = '';
+    showAuthError('');
     showOverlay('view-auth');
-  });
-
-  // Auth tab switching
-  document.querySelectorAll('.auth-tab').forEach(function(t) {
-    t.addEventListener('click', function() { authTab(this.dataset.atab); });
   });
 
   // Auth close
   safeListen('auth-close', 'click', function() { hideOverlay('view-auth'); });
 
-  // Firebase Login
-  safeListen('btn-login', 'click', function() {
-    var email = document.getElementById('login-email').value.trim();
-    var password = document.getElementById('login-password').value;
-    firebaseLogin(email, password);
+  // Google sign-in
+  safeListen('btn-auth-google', 'click', firebaseGoogleSignIn);
+
+  // Phone sign-in — show phone step
+  safeListen('btn-auth-phone', 'click', function() {
+    showAuthStep('phone');
+    showAuthError('');
   });
 
-  // Firebase Signup
-  safeListen('btn-signup', 'click', firebaseSignup);
+  // Send SMS code
+  safeListen('btn-send-code', 'click', firebasePhoneSignIn);
 
-  // Google sign-in
-  safeListen('login-google', 'click', function() { firebaseGoogleSignIn('login'); });
-  safeListen('signup-google', 'click', function() { firebaseGoogleSignIn('signup'); });
+  // Verify SMS code
+  safeListen('btn-verify-code', 'click', firebaseVerifyCode);
+
+  // Back from phone step
+  safeListen('btn-back-methods', 'click', function() {
+    showAuthStep('methods');
+    showAuthError('');
+  });
+
+  // Back from verify step
+  safeListen('btn-back-phone', 'click', function() {
+    showAuthStep('phone');
+    showAuthError('');
+    authConfirmResult = null;
+  });
 
   // Auth skip (continue without account)
   safeListen('auth-skip', 'click', function() {
@@ -3332,18 +3312,6 @@ document.addEventListener('DOMContentLoaded', function() {
       openDim = null;
       showOverlay('view-hero');
       document.getElementById('view-auth').classList.remove('active');
-    }
-  });
-
-  // Enter key on login fields
-  safeListen('login-email', 'keydown', function(e) {
-    if (e.key === 'Enter') document.getElementById('login-password').focus();
-  });
-  safeListen('login-password', 'keydown', function(e) {
-    if (e.key === 'Enter') {
-      var email = document.getElementById('login-email').value.trim();
-      var password = document.getElementById('login-password').value;
-      firebaseLogin(email, password);
     }
   });
 

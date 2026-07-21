@@ -66,88 +66,75 @@
   </div>
 </div>
 
-<!-- AUTH OVERLAY (Login / Signup) -->
+<!-- AUTH OVERLAY — Google & Phone only -->
 <div id="view-auth" class="overlay">
-  <div class="overlay-card auth-card">
+  <div class="overlay-card auth-card" style="max-width:400px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
       <span></span>
       <button id="auth-close" style="background:none;border:none;font-size:1.4rem;color:var(--muted);cursor:pointer;padding:0 4px">&times;</button>
     </div>
-    <div class="auth-tabs">
-      <button class="auth-tab active" data-atab="login">Log In</button>
-      <button class="auth-tab" data-atab="signup">Sign Up</button>
+    <h3 id="auth-title">Sign in to BASKUG LIFE</h3>
+    <p class="setup-sub" id="auth-sub">Sync your data across devices</p>
+    <div class="auth-error" id="auth-error"></div>
+
+    <!-- Step 0: Method picker -->
+    <div id="auth-step-methods">
+      <button class="social-btn google-btn" id="btn-auth-google" style="width:100%;margin-bottom:10px;">
+        <svg viewBox="0 0 48 48" width="18" height="18"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59A14.5 14.5 0 0 1 9.5 24c0-1.59.28-3.14.76-4.59l-7.98-6.19A23.99 23.99 0 0 0 0 24c0 3.77.87 7.35 2.56 10.56l7.97-5.97z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 5.97C6.51 42.62 14.62 48 24 48z"/></svg>
+        Continue with Google
+      </button>
+      <button class="social-btn phone-btn" id="btn-auth-phone" style="width:100%;">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+        Continue with Phone
+      </button>
     </div>
 
-    <!-- LOGIN FORM -->
-    <div id="auth-login">
-      <h3>Welcome Back</h3>
-      <p class="setup-sub">Sign in to access your dashboard</p>
-      <div class="auth-error" id="login-error"></div>
-      <div class="social-btns">
-        <button class="social-btn google-btn" id="login-google"><svg viewBox="0 0 48 48" width="18" height="18"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59A14.5 14.5 0 0 1 9.5 24c0-1.59.28-3.14.76-4.59l-7.98-6.19A23.99 23.99 0 0 0 0 24c0 3.77.87 7.35 2.56 10.56l7.97-5.97z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 5.97C6.51 42.62 14.62 48 24 48z"/></svg> Continue with Google</button>
-        <button class="social-btn apple-btn" id="login-apple"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg> Continue with Apple</button>
-        <button class="social-btn phone-btn" id="login-phone"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg> Phone number</button>
+    <!-- Step 1: Enter phone number -->
+    <div id="auth-step-phone" class="hidden">
+      <h4 style="margin-bottom:8px;">📱 Enter your phone number</h4>
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px;">We'll send you a verification code via SMS.</p>
+      <div class="add-row" style="gap:6px;margin-bottom:10px;">
+        <select id="auth-phone-code" style="width:90px;flex-shrink:0;">
+          <option value="+1">🇺🇸 +1</option>
+          <option value="+44">🇬🇧 +44</option>
+          <option value="+63">🇵🇭 +63</option>
+          <option value="+91">🇮🇳 +91</option>
+          <option value="+86">🇨🇳 +86</option>
+          <option value="+81">🇯🇵 +81</option>
+          <option value="+82">🇰🇷 +82</option>
+          <option value="+61">🇦🇺 +61</option>
+          <option value="+49">🇩🇪 +49</option>
+          <option value="+33">🇫🇷 +33</option>
+          <option value="+39">🇮🇹 +39</option>
+          <option value="+55">🇧🇷 +55</option>
+          <option value="+52">🇲🇽 +52</option>
+          <option value="+7">🇷🇺 +7</option>
+          <option value="+971">🇦🇪 +971</option>
+          <option value="+966">🇸🇦 +966</option>
+          <option value="+234">🇳🇬 +234</option>
+          <option value="+27">🇿🇦 +27</option>
+          <option value="+84">🇻🇳 +84</option>
+          <option value="+62">🇮🇩 +62</option>
+          <option value="+92">🇵🇰 +92</option>
+          <option value="+880">🇧🇩 +880</option>
+        </select>
+        <input type="tel" id="auth-phone-input" placeholder="Phone number" style="flex:1;">
       </div>
-      <div class="auth-divider">── or ──</div>
-      <div class="add-row" style="flex-direction:column;gap:10px">
-        <input type="email" id="login-email" placeholder="Email address" style="width:100%">
-        <input type="password" id="login-password" placeholder="Password" style="width:100%">
-        <button class="btn hero-btn" id="btn-login" style="width:100%">Log In <span class="btn-arrow">→</span></button>
-      </div>
+      <div id="auth-recaptcha"></div>
+      <button class="btn btn-full" id="btn-send-code" style="margin-bottom:8px;">Send Code</button>
+      <button class="btn-link" id="btn-back-methods" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.82rem;text-decoration:underline;display:block;width:100%;text-align:center;">← Back to sign in options</button>
     </div>
 
-    <!-- SIGNUP FORM -->
-    <div id="auth-signup" class="hidden">
-      <h3>Create Your Account</h3>
-      <p class="setup-sub">Start your wellness journey</p>
-      <div class="auth-error" id="signup-error"></div>
-      <div class="social-btns">
-        <button class="social-btn google-btn" id="signup-google"><svg viewBox="0 0 48 48" width="18" height="18"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59A14.5 14.5 0 0 1 9.5 24c0-1.59.28-3.14.76-4.59l-7.98-6.19A23.99 23.99 0 0 0 0 24c0 3.77.87 7.35 2.56 10.56l7.97-5.97z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 5.97C6.51 42.62 14.62 48 24 48z"/></svg> Sign up with Google</button>
-        <button class="social-btn apple-btn" id="signup-apple"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg> Sign up with Apple</button>
-        <button class="social-btn phone-btn" id="signup-phone-btn"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg> Phone number</button>
-      </div>
-      <div class="auth-divider">── or ──</div>
-      <div class="add-row" style="flex-direction:column;gap:8px">
-        <input type="text" id="signup-username" placeholder="Username" style="width:100%">
-        <input type="email" id="signup-email" placeholder="Email address" style="width:100%">
-        <input type="text" id="signup-name" placeholder="Full name" style="width:100%">
-        <div class="add-row" style="gap:6px">
-          <select id="signup-phone-code" style="width:90px;flex-shrink:0">
-            <option value="+1">🇺🇸 +1</option>
-            <option value="+44">🇬🇧 +44</option>
-            <option value="+63">🇵🇭 +63</option>
-            <option value="+91">🇮🇳 +91</option>
-            <option value="+86">🇨🇳 +86</option>
-            <option value="+81">🇯🇵 +81</option>
-            <option value="+82">🇰🇷 +82</option>
-            <option value="+61">🇦🇺 +61</option>
-            <option value="+49">🇩🇪 +49</option>
-            <option value="+33">🇫🇷 +33</option>
-            <option value="+39">🇮🇹 +39</option>
-            <option value="+55">🇧🇷 +55</option>
-            <option value="+52">🇲🇽 +52</option>
-            <option value="+7">🇷🇺 +7</option>
-            <option value="+971">🇦🇪 +971</option>
-            <option value="+966">🇸🇦 +966</option>
-            <option value="+234">🇳🇬 +234</option>
-            <option value="+27">🇿🇦 +27</option>
-            <option value="+84">🇻🇳 +84</option>
-            <option value="+62">🇮🇩 +62</option>
-            <option value="+92">🇵🇰 +92</option>
-            <option value="+880">🇧🇩 +880</option>
-          </select>
-          <input type="tel" id="signup-phone" placeholder="Phone number (optional)" style="flex:1">
-        </div>
-        <div class="add-row" style="gap:8px">
-          <select id="signup-gender" style="flex:1" required><option value="">Gender</option><option value="female">Female</option><option value="male">Male</option><option value="nonbinary">Non-binary</option><option value="transgender">Transgender</option><option value="bisexual">Bisexual</option><option value="genderqueer">Genderqueer</option><option value="genderfluid">Genderfluid</option><option value="agender">Agender</option><option value="intersex">Intersex</option><option value="other">Other</option></select>
-          <input type="number" id="signup-age" placeholder="Age" style="width:70px">
-        </div>
-        <input type="password" id="signup-password" placeholder="Password (min 6 characters)" style="width:100%">
-        <input type="password" id="signup-confirm" placeholder="Confirm password" style="width:100%">
-        <button class="btn hero-btn" id="btn-signup" style="width:100%">Create Account <span class="btn-arrow">→</span></button>
-      </div>
+    <!-- Step 2: Verify code -->
+    <div id="auth-step-verify" class="hidden">
+      <h4 style="margin-bottom:8px;">🔐 Enter verification code</h4>
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px;">Code sent to <strong id="auth-phone-display"></strong></p>
+      <input type="text" id="auth-code-input" placeholder="6-digit code" maxlength="6" inputmode="numeric" style="width:100%;text-align:center;font-size:1.2rem;letter-spacing:8px;margin-bottom:10px;">
+      <button class="btn btn-full" id="btn-verify-code" style="margin-bottom:8px;">Verify</button>
+      <button class="btn-link" id="btn-back-phone" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.82rem;text-decoration:underline;display:block;width:100%;text-align:center;">← Change phone number</button>
     </div>
-    <div style="text-align:center;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+
+    <div style="text-align:center;margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">
       <button id="auth-skip" style="background:none;border:none;color:var(--muted);font-size:0.82rem;cursor:pointer;text-decoration:underline;">Continue without account →</button>
     </div>
   </div>
