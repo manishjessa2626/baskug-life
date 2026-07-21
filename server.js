@@ -9,12 +9,30 @@ var fs = require('fs');
 var http = require('http');
 var { Server } = require('socket.io');
 var Database = require('better-sqlite3');
-var jwt = require('jsonwebtoken');
+var admin = require('firebase-admin');
+var { getAuth } = require('firebase-admin/auth');
 
 var { auth } = require('./middleware/auth');
-var { loginLimiter, registerLimiter, apiLimiter } = require('./middleware/rateLimit');
+var { apiLimiter } = require('./middleware/rateLimit');
 var { createRouter: createAuthRouter } = require('./routes/auth');
 var { generatePlan, getEquipmentLabel } = require('./workout/exercises');
+
+// Firebase Admin — support local file or env var (for Render/git)
+var serviceAccount;
+try {
+  serviceAccount = require('./service-account.json');
+} catch(e) {
+  // Fallback: read from env var (base64-encoded JSON)
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    serviceAccount = JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString());
+  } else {
+    console.error('FATAL: No Firebase service account found. Set FIREBASE_SERVICE_ACCOUNT env var or add service-account.json');
+    process.exit(1);
+  }
+}
+admin.initializeApp({
+  credential: admin.cert(serviceAccount)
+});
 
 var app = express();
 var server = http.createServer(app);
@@ -28,13 +46,12 @@ var io = new Server(server, {
 io.use(function(socket, next) {
   var token = socket.handshake.auth.token;
   if (!token) return next(new Error('Not authenticated'));
-  try {
-    var decoded = jwt.verify(token, process.env.JWT_SECRET);
-    socket.userId = decoded.id;
+  getAuth().verifyIdToken(token).then(function(decoded) {
+    socket.userId = decoded.uid;
     next();
-  } catch (e) {
+  }).catch(function() {
     next(new Error('Invalid token'));
-  }
+  });
 });
 
 io.on('connection', function(socket) {
@@ -73,12 +90,18 @@ var dbPath = process.env.DATABASE_PATH || path.join(dataDir, 'baskug.db');
 var db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 
+// Migrate old schema (INTEGER id) -> new schema (TEXT id) if needed
+var colInfo = db.prepare("PRAGMA table_info('users')").all();
+var hasOldSchema = colInfo.some(function(c) { return c.name === 'username'; });
+if (hasOldSchema) {
+  console.log('Migrating database schema...');
+  db.exec('DROP TABLE IF EXISTS user_data; DROP TABLE IF EXISTS users;');
+}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
+    id TEXT PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL DEFAULT '',
     name TEXT DEFAULT '',
     gender TEXT DEFAULT '',
     age INTEGER DEFAULT 0,
@@ -91,7 +114,7 @@ db.exec(`
   );
   CREATE TABLE IF NOT EXISTS user_data (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
     data_key TEXT NOT NULL,
     data_value TEXT NOT NULL DEFAULT '{}',
     UNIQUE(user_id, data_key),
@@ -112,8 +135,6 @@ function setUserData(userId, key, value) {
 }
 
 // ============ AUTH ROUTES ============
-app.use('/api/auth/register', registerLimiter);
-app.use('/api/auth/login', loginLimiter);
 app.use('/api/auth', createAuthRouter(db));
 
 // ============ USER PROFILE ============
@@ -178,7 +199,6 @@ app.post('/api/workout/plan/generate', auth, function(req, res) {
   try {
     var prefs = req.body.preferences || {};
     var schedule = req.body.schedule || null;
-    // Use user profile as fallback
     var userRow = db.prepare('SELECT age, gender, activity_level, weight FROM users WHERE id = ?').get(req.userId);
     if (!prefs.intensity && userRow) {
       if (userRow.activity_level === 'sedentary') prefs.intensity = 'beginner';
@@ -186,8 +206,10 @@ app.post('/api/workout/plan/generate', auth, function(req, res) {
     }
     var planPrefs = { goal: prefs.goal || 'general', equipment: prefs.equipment || [] };
     if (prefs.intensity) planPrefs.intensity = prefs.intensity;
-    // Apply user-specific preferences to make plan unique
-    var userSeed = req.userId * 7;
+    var userSeed = 0;
+    if (typeof req.userId === 'string') {
+      for (var i = 0; i < req.userId.length; i++) userSeed += req.userId.charCodeAt(i);
+    }
     var plan = generatePlan(planPrefs, { userSeed: userSeed, schedule: schedule });
     setUserData(req.userId, 'baskug_workout_plan', plan);
     io.to('user:' + req.userId).emit('data-update', { key: 'baskug_workout_plan', value: plan });

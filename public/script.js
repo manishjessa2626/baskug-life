@@ -66,11 +66,19 @@ var CAT_LABEL = { productive:'Productive', life:'Life Tasks', growth:'Growth', f
 
 var user = {}, schedule = {}, workSchedule = {};
 var WORK_DAYS = ['monday','tuesday','wednesday','thursday','friday']; // work-week default
-var authToken = localStorage.getItem('baskug_token');
+var authToken = null;
+var firebaseUserResolve = null;
+var firebaseReady = new Promise(function(r) { firebaseUserResolve = r; });
+var firebaseUserCache = null;
+var needsProfile = false;
+
+function getAuthHeaders() {
+  return authToken ? { 'Authorization': 'Bearer ' + authToken } : {};
+}
 
 function apiGet(key) {
   return fetch('/api/data/' + encodeURIComponent(key), {
-    headers: authToken ? { 'Authorization': 'Bearer ' + authToken } : {}
+    headers: getAuthHeaders()
   }).then(function(r) {
     if (!r.ok) throw new Error('API error');
     return r.json();
@@ -81,7 +89,7 @@ function apiPut(key, data) {
   var url = '/api/data/' + encodeURIComponent(key);
   return fetch(url, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'Authorization': authToken ? 'Bearer ' + authToken : '' },
+    headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
     body: JSON.stringify(data)
   }).then(function(r) {
     if (!r.ok) throw new Error('API error');
@@ -3029,7 +3037,7 @@ function initTheme() {
   });
 }
 
-// ===== AUTH SYSTEM =====
+// ===== FIREBASE AUTH SYSTEM =====
 function authTab(tab) {
   document.querySelectorAll('.auth-tab').forEach(function(t) { t.classList.toggle('active', t.dataset.atab === tab); });
   document.getElementById('auth-login').classList.toggle('hidden', tab !== 'login');
@@ -3042,14 +3050,33 @@ function showAuthError(id, msg) {
   el.style.display = msg ? 'block' : 'none';
 }
 
-function handleRegister() {
-  var btn = document.getElementById('btn-signup');
-  if (!btn || btn.disabled) return;
-  btn.disabled = true;
-  btn.innerHTML = '⏳ Creating account...';
+function resetAuthBtn(id, text) {
+  var btn = document.getElementById(id);
+  if (btn) { btn.disabled = false; btn.innerHTML = text; }
+}
+
+function setAuthBtn(id, text) {
+  var btn = document.getElementById(id);
+  if (btn) { btn.disabled = true; btn.innerHTML = text; }
+}
+
+function firebaseLogin(email, password) {
+  setAuthBtn('btn-login', '⏳ Signing in...');
+  showAuthError('login-error', '');
+  firebase.auth().signInWithEmailAndPassword(email, password)
+    .then(function() {
+      hideOverlay('view-auth');
+    })
+    .catch(function(e) {
+      showAuthError('login-error', firebaseAuthErrorMessage(e));
+      resetAuthBtn('btn-login', 'Log In <span class="btn-arrow">→</span>');
+    });
+}
+
+function firebaseSignup() {
+  setAuthBtn('btn-signup', '⏳ Creating account...');
   showAuthError('signup-error', '');
 
-  var username = document.getElementById('signup-username').value.trim();
   var email = document.getElementById('signup-email').value.trim();
   var name = document.getElementById('signup-name').value.trim();
   var phoneEl = document.getElementById('signup-phone');
@@ -3060,140 +3087,160 @@ function handleRegister() {
   var password = document.getElementById('signup-password').value;
   var confirmPw = document.getElementById('signup-confirm').value;
 
-  if (!username || !email || !password) {
-    showAuthError('signup-error', 'Please fill in username, email, and password.');
-    btn.disabled = false; btn.innerHTML = 'Create Account <span class="btn-arrow">→</span>';
+  if (!email || !password) {
+    showAuthError('signup-error', 'Email and password are required.');
+    resetAuthBtn('btn-signup', 'Create Account <span class="btn-arrow">→</span>');
     return;
   }
   if (!gender) {
     showAuthError('signup-error', 'Please select your gender.');
-    btn.disabled = false; btn.innerHTML = 'Create Account <span class="btn-arrow">→</span>';
+    resetAuthBtn('btn-signup', 'Create Account <span class="btn-arrow">→</span>');
     return;
   }
   if (password.length < 6) {
     showAuthError('signup-error', 'Password must be at least 6 characters.');
-    btn.disabled = false; btn.innerHTML = 'Create Account <span class="btn-arrow">→</span>';
+    resetAuthBtn('btn-signup', 'Create Account <span class="btn-arrow">→</span>');
     return;
   }
   if (password !== confirmPw) {
     showAuthError('signup-error', 'Passwords do not match.');
-    btn.disabled = false; btn.innerHTML = 'Create Account <span class="btn-arrow">→</span>';
+    resetAuthBtn('btn-signup', 'Create Account <span class="btn-arrow">→</span>');
     return;
   }
 
-  var body = { username: username, email: email, name: name, gender: gender, age: age, password: password };
-  if (fullPhone) body.phone = fullPhone;
-
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/api/auth/register', true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState !== 4) return;
-    btn.disabled = false;
-    btn.innerHTML = 'Create Account <span class="btn-arrow">→</span>';
-    try {
-      var txt = xhr.responseText;
-      if (!txt) {
-        showAuthError('signup-error', 'Empty response from server (status ' + xhr.status + ')');
-        return;
+  firebase.auth().createUserWithEmailAndPassword(email, password)
+    .then(function(cred) {
+      return cred.user.getIdToken().then(function(token) {
+        return fetch('/api/auth/firebase', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: token, name: name, gender: gender, age: age, phone: fullPhone })
+        });
+      });
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.user) {
+        Object.assign(user, data.user);
+        user.heightCm = user.height || '';
+        user.weightKg = user.weight || '';
+        user.phone = user.phone || '';
+        needsProfile = !user.name;
+        localStorage.setItem('baskug_user', JSON.stringify(user));
       }
-      var data = JSON.parse(txt);
-      if (xhr.status !== 200) {
-        showAuthError('signup-error', data.error || 'Registration failed (status ' + xhr.status + ')');
-        return;
-      }
-      authToken = data.token;
-      localStorage.setItem('baskug_token', authToken);
-      user = data.user || {};
-      user.name = user.name || name;
-      user.gender = user.gender || gender;
-      user.age = user.age || age;
-      user.phone = user.phone || fullPhone;
-      hideOverlay('view-hero');
       hideOverlay('view-auth');
-      loadAllRemote().then(function() { enterApp(); }).catch(function() { enterApp(); });
-    } catch(e) {
-      showAuthError('signup-error', 'Status: ' + xhr.status + ' Response: ' + (xhr.responseText || '(empty)'));
-      alert('Signup failed - Status: ' + xhr.status + '\nResponse: ' + (xhr.responseText || '(empty)'));
-    }
-  };
-  xhr.onerror = function() {
-    btn.disabled = false;
-    btn.innerHTML = 'Create Account <span class="btn-arrow">→</span>';
-    showAuthError('signup-error', 'Cannot reach server. Is it running on http://localhost:3001?');
-    alert('Server not reachable!\nMake sure the server is running:\n  cd baskug-life && ./start.sh\nThen open http://localhost:3001');
-  };
-  xhr.send(JSON.stringify(body));
+    })
+    .catch(function(e) {
+      showAuthError('signup-error', firebaseAuthErrorMessage(e));
+      resetAuthBtn('btn-signup', 'Create Account <span class="btn-arrow">→</span>');
+    });
 }
 
-function handleLogin() {
-  var btn = document.getElementById('btn-login');
-  if (!btn || btn.disabled) return;
-  btn.disabled = true;
-  btn.innerHTML = '⏳ Signing in...';
-  showAuthError('login-error', '');
+function firebaseGoogleSignIn(mode) {
+  var errorId = mode === 'login' ? 'login-error' : 'signup-error';
+  showAuthError(errorId, '');
+  var provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider)
+    .then(function(result) {
+      if (mode === 'signup') {
+        needsProfile = true;
+      }
+      hideOverlay('view-auth');
+    })
+    .catch(function(e) {
+      showAuthError(errorId, firebaseAuthErrorMessage(e));
+    });
+}
 
-  var email = document.getElementById('login-email').value.trim();
-  var password = document.getElementById('login-password').value;
+function firebaseAuthErrorMessage(e) {
+  var code = e.code || '';
+  var map = {
+    'auth/user-not-found': 'No account found with this email.',
+    'auth/wrong-password': 'Incorrect password.',
+    'auth/invalid-credential': 'Invalid email or password.',
+    'auth/email-already-in-use': 'An account with this email already exists.',
+    'auth/weak-password': 'Password must be at least 6 characters.',
+    'auth/invalid-email': 'Invalid email address.',
+    'auth/too-many-requests': 'Too many attempts. Please try again later.',
+    'auth/network-request-failed': 'Network error. Check your connection.',
+    'auth/popup-closed-by-user': 'Sign-in cancelled.',
+    'auth/cancelled-popup-request': 'Sign-in cancelled.'
+  };
+  return map[code] || e.message || 'Authentication failed.';
+}
 
-  if (!email || !password) {
-    showAuthError('login-error', 'Email and password are required.');
-    btn.disabled = false; btn.innerHTML = 'Log In <span class="btn-arrow">→</span>';
-    return;
+function firebaseLogout() {
+  firebase.auth().signOut().then(function() {
+    fetch('/api/auth/logout', { method: 'POST' }).catch(function() {});
+    authToken = null;
+    localStorage.removeItem('baskug_token');
+    localStorage.removeItem('baskug_workout_plan');
+    localStorage.removeItem('baskug_workout_done');
+    workoutPlan = null;
+    workoutDone = {};
+    user = {};
+    needsProfile = false;
+    document.body.removeAttribute('data-gender');
+    document.getElementById('app-main').classList.remove('active');
+    document.getElementById('app-main').classList.add('hidden');
+    document.getElementById('main-nav').classList.add('hidden');
+    document.getElementById('main-footer').classList.add('hidden');
+    document.querySelectorAll('.dim.open').forEach(function(d) { d.classList.remove('open'); });
+    openDim = null;
+    showOverlay('view-hero');
+    document.getElementById('view-auth').classList.remove('active');
+  }).catch(function() {});
+}
+
+function onFirebaseAuth(firebaseUser) {
+  if (firebaseUser) {
+    firebaseUserCache = firebaseUser;
+    firebaseUser.getIdToken().then(function(token) {
+      authToken = token;
+      localStorage.setItem('baskug_token', token);
+      return fetch('/api/auth/firebase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token })
+      });
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.user) {
+        Object.assign(user, data.user);
+        user.heightCm = user.height || '';
+        user.weightKg = user.weight || '';
+        user.phone = user.phone || '';
+        localStorage.setItem('baskug_user', JSON.stringify(user));
+        needsProfile = !user.name;
+        return loadAllRemote();
+      }
+      throw new Error('No user data');
+    }).then(function() {
+      hideOverlay('view-hero');
+      if (needsProfile) {
+        showOverlay('view-setup');
+      } else {
+        enterApp();
+      }
+      firebaseUserResolve();
+    }).catch(function(e) {
+      console.error('Firebase auth setup error:', e);
+      authToken = null;
+      localStorage.removeItem('baskug_token');
+      showOverlay('view-hero');
+      firebaseUserResolve();
+    });
+  } else {
+    firebaseUserCache = null;
+    authToken = null;
+    localStorage.removeItem('baskug_token');
+    loadAll();
+    firebaseUserResolve();
+    if (user && user.name) {
+      enterApp();
+    } else {
+      showOverlay('view-hero');
+    }
   }
-
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/api/auth/login', true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState !== 4) return;
-    btn.disabled = false;
-    btn.innerHTML = 'Log In <span class="btn-arrow">→</span>';
-    try {
-      var data = JSON.parse(xhr.responseText);
-      if (xhr.status !== 200) {
-        showAuthError('login-error', data.error || 'Login failed.');
-        return;
-      }
-      authToken = data.token;
-      localStorage.setItem('baskug_token', authToken);
-      user = data.user || {};
-      user.heightCm = user.height || '';
-      user.weightKg = user.weight || '';
-      user.phone = user.phone || '';
-      hideOverlay('view-hero');
-      hideOverlay('view-auth');
-      loadAllRemote().then(function() { enterApp(); }).catch(function() { enterApp(); });
-    } catch(e) {
-      showAuthError('login-error', 'Error: ' + e.message);
-    }
-  };
-  xhr.onerror = function() {
-    btn.disabled = false;
-    btn.innerHTML = 'Log In <span class="btn-arrow">→</span>';
-    showAuthError('login-error', 'Cannot reach server. Is it running on http://localhost:3001?');
-  };
-  xhr.send(JSON.stringify({ email: email, password: password }));
-}
-
-function handleLogout() {
-  fetch('/api/auth/logout', { method: 'POST' }).catch(function() {});
-  authToken = null;
-  localStorage.removeItem('baskug_token');
-  localStorage.removeItem('baskug_workout_plan');
-  localStorage.removeItem('baskug_workout_done');
-  workoutPlan = null;
-  workoutDone = {};
-  user = {};
-  document.body.removeAttribute('data-gender');
-  document.getElementById('app-main').classList.remove('active');
-  document.getElementById('app-main').classList.add('hidden');
-  document.getElementById('main-nav').classList.add('hidden');
-  document.getElementById('main-footer').classList.add('hidden');
-  document.querySelectorAll('.dim.open').forEach(function(d) { d.classList.remove('open'); });
-  openDim = null;
-  showOverlay('view-hero');
-  document.getElementById('view-auth').classList.remove('active');
 }
 
 async function loadAllRemote() {
@@ -3214,32 +3261,90 @@ async function loadAllRemote() {
   await loadSymptoms();
 }
 
-async function checkAuth() {
-  if (!authToken) return false;
-  try {
-    var res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + authToken } });
-    if (!res.ok) throw new Error('Auth failed');
-    var data = await res.json();
-    user = data || {};
-    user.heightCm = user.height || '';
-    user.weightKg = user.weight || '';
-    user.phone = user.phone || '';
-    return true;
-  } catch(e) {
-    authToken = null;
-    localStorage.removeItem('baskug_token');
-    return false;
-  }
-}
-
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', function() {
   initTheme();
   loadAll();
   bodyLock();
 
+  // Firebase auth state listener (onIdTokenChanged also fires on token refresh)
+  firebase.auth().onIdTokenChanged(function(user) {
+    if (user) {
+      user.getIdToken().then(function(t) { authToken = t; });
+    }
+    onFirebaseAuth(user);
+  });
+
+  // Show login/signup overlay instead of going straight to setup
   safeListen('btn-get-started', 'click', function() {
+    showOverlay('view-auth');
+  });
+
+  // Auth tab switching
+  document.querySelectorAll('.auth-tab').forEach(function(t) {
+    t.addEventListener('click', function() { authTab(this.dataset.atab); });
+  });
+
+  // Auth close
+  safeListen('auth-close', 'click', function() { hideOverlay('view-auth'); });
+
+  // Firebase Login
+  safeListen('btn-login', 'click', function() {
+    var email = document.getElementById('login-email').value.trim();
+    var password = document.getElementById('login-password').value;
+    firebaseLogin(email, password);
+  });
+
+  // Firebase Signup
+  safeListen('btn-signup', 'click', firebaseSignup);
+
+  // Google sign-in
+  safeListen('login-google', 'click', function() { firebaseGoogleSignIn('login'); });
+  safeListen('signup-google', 'click', function() { firebaseGoogleSignIn('signup'); });
+
+  // Auth skip (continue without account)
+  safeListen('auth-skip', 'click', function() {
+    hideOverlay('view-auth');
+    fillProfile();
     showOverlay('view-setup');
+  });
+
+  // Logout
+  safeListen('btn-logout', 'click', function() {
+    if (firebaseUserCache) {
+      firebaseLogout();
+    } else {
+      // Non-authed user — just go back to hero
+      authToken = null;
+      localStorage.removeItem('baskug_token');
+      localStorage.removeItem('baskug_workout_plan');
+      localStorage.removeItem('baskug_workout_done');
+      workoutPlan = null;
+      workoutDone = {};
+      user = {};
+      needsProfile = false;
+      document.body.removeAttribute('data-gender');
+      document.getElementById('app-main').classList.remove('active');
+      document.getElementById('app-main').classList.add('hidden');
+      document.getElementById('main-nav').classList.add('hidden');
+      document.getElementById('main-footer').classList.add('hidden');
+      document.querySelectorAll('.dim.open').forEach(function(d) { d.classList.remove('open'); });
+      openDim = null;
+      showOverlay('view-hero');
+      document.getElementById('view-auth').classList.remove('active');
+    }
+  });
+
+  // Enter key on login fields
+  safeListen('login-email', 'keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('login-password').focus();
+  });
+  safeListen('login-password', 'keydown', function(e) {
+    if (e.key === 'Enter') {
+      var email = document.getElementById('login-email').value.trim();
+      var password = document.getElementById('login-password').value;
+      firebaseLogin(email, password);
+    }
   });
 
   safeListen('profile-form', 'submit', saveProfile);

@@ -147,15 +147,16 @@
         <button class="btn hero-btn" id="btn-signup" style="width:100%">Create Account <span class="btn-arrow">→</span></button>
       </div>
     </div>
+    <div style="text-align:center;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+      <button id="auth-skip" style="background:none;border:none;color:var(--muted);font-size:0.82rem;cursor:pointer;text-decoration:underline;">Continue without account →</button>
+    </div>
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script>
-function testClick() {
-  var btn = document.getElementById('btn-signup');
-  if (btn) btn.innerHTML = '✅ Working!';
-}
-// Check server connection
 function checkServer() {
   var el = document.getElementById('server-status');
   if (!el) return;

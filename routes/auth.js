@@ -1,12 +1,10 @@
 var express = require('express');
-var bcrypt = require('bcryptjs');
-var jwt = require('jsonwebtoken');
+var { getAuth } = require('firebase-admin/auth');
 var { auth } = require('../middleware/auth');
 
 function createRouter(db) {
   var router = express.Router();
 
-  // Helpers
   function getUserData(userId, key) {
     var row = db.prepare('SELECT data_value FROM user_data WHERE user_id = ? AND data_key = ?').get(userId, key);
     return row ? JSON.parse(row.data_value) : null;
@@ -18,113 +16,66 @@ function createRouter(db) {
       .run(userId, key, str, str);
   }
 
-  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  // POST /api/auth/register
-  router.post('/register', function(req, res) {
+  // POST /api/auth/firebase — Verify Firebase ID token, find or create user
+  router.post('/firebase', function(req, res) {
     try {
-      var { username, email, password, name, gender, age, phone } = req.body || {};
+      var { token, name, gender, age, phone } = req.body;
+      if (!token) return res.status(400).json({ error: 'Token required' });
 
-      if (!username || !email || !password) {
-        return res.status(400).json({ error: 'Username, email, and password required' });
-      }
+      getAuth().verifyIdToken(token).then(function(decoded) {
+        var uid = decoded.uid;
+        var email = decoded.email || '';
+        var displayName = decoded.name || name || '';
 
-      username = username.trim();
-      email = email.trim().toLowerCase();
+        var user = db.prepare('SELECT * FROM users WHERE id = ?').get(uid);
+        if (!user) {
+          db.prepare(
+            'INSERT INTO users (id, email, name, gender, age, height, weight, activity_level, cycle_data, phone, created_at) VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, datetime(\'now\'))'
+          ).run(uid, email, displayName, gender || '', age || 0, 'moderate', '{}', phone || '');
 
-      if (username.length < 2) {
-        return res.status(400).json({ error: 'Username must be at least 2 characters' });
-      }
+          user = db.prepare('SELECT * FROM users WHERE id = ?').get(uid);
 
-      if (!EMAIL_RE.test(email)) {
-        return res.status(400).json({ error: 'Invalid email format' });
-      }
-
-      if (password.length < 6) {
-        return res.status(400).json({ error: 'Password must be at least 6 characters' });
-      }
-
-      var existing = db.prepare('SELECT id FROM users WHERE email = ? OR username = ?').get(email, username);
-      if (existing) {
-        return res.status(400).json({ error: 'Username or email already taken' });
-      }
-
-      var hash = bcrypt.hashSync(password, 12);
-      var result = db.prepare(
-        'INSERT INTO users (username, email, password_hash, name, gender, age, height, weight, activity_level, phone) VALUES (?, ?, ?, ?, ?, ?, 0, 0, ?, ?)'
-      ).run(username, email, hash, name || '', gender || '', age || 0, 'moderate', phone || '');
-
-      var userId = result.lastInsertRowid;
-
-      var defaults = {
-        baskug_schedule: {},
-        baskug_meals: {},
-        baskug_workouts: {},
-        baskug_routines: [],
-        baskug_routine_log: {},
-        baskug_hobbies: [],
-        baskug_symptoms: {},
-        baskug_mealplan: {},
-        baskug_work: {}
-      };
-      Object.keys(defaults).forEach(function(key) {
-        setUserData(userId, key, defaults[key]);
-      });
-
-      var token = jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
-      res.cookie('token', token, {
-        httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production'
-      });
-      res.json({ token, user: { id: userId, username, email, name, gender, age, phone } });
-    } catch (e) {
-      console.error('Register error:', e.message);
-      if (e.message && e.message.includes('UNIQUE')) {
-        return res.status(400).json({ error: 'Username or email already taken' });
-      }
-      res.status(500).json({ error: 'Registration failed. Please try again.' });
-    }
-  });
-
-  // POST /api/auth/login
-  router.post('/login', function(req, res) {
-    try {
-      var { email, password } = req.body;
-      if (!email || !password) {
-        return res.status(400).json({ error: 'Email and password required' });
-      }
-
-      email = email.trim().toLowerCase();
-
-      var user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-      if (!user) {
-        return res.status(401).json({ error: 'Invalid email or password' });
-      }
-
-      if (!bcrypt.compareSync(password, user.password_hash)) {
-        return res.status(401).json({ error: 'Invalid email or password' });
-      }
-
-      var token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-      res.cookie('token', token, {
-        httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production'
-      });
-      res.json({
-        token,
-        user: {
-          id: user.id, username: user.username, email: user.email, name: user.name,
-          gender: user.gender, age: user.age, height: user.height, weight: user.weight,
-          activityLevel: user.activity_level, cycleData: JSON.parse(user.cycle_data || '{}'), phone: user.phone
+          var defaults = {
+            baskug_schedule: {},
+            baskug_meals: {},
+            baskug_workouts: {},
+            baskug_routines: [],
+            baskug_routine_log: {},
+            baskug_hobbies: [],
+            baskug_symptoms: {},
+            baskug_mealplan: {},
+            baskug_work: {}
+          };
+          Object.keys(defaults).forEach(function(key) {
+            setUserData(uid, key, defaults[key]);
+          });
+        } else if (name) {
+          db.prepare('UPDATE users SET name=?, gender=?, age=?, phone=? WHERE id=?')
+            .run(name, gender || '', age || 0, phone || '', uid);
+          user = db.prepare('SELECT * FROM users WHERE id = ?').get(uid);
         }
+
+        res.cookie('token', token, {
+          httpOnly: true,
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production'
+        });
+
+        res.json({
+          user: {
+            id: user.id, email: user.email, name: user.name,
+            gender: user.gender, age: user.age, height: user.height, weight: user.weight,
+            activityLevel: user.activity_level, cycleData: JSON.parse(user.cycle_data || '{}'), phone: user.phone
+          }
+        });
+      }).catch(function(e) {
+        console.error('Firebase verify error:', e.message);
+        res.status(401).json({ error: 'Invalid Firebase token' });
       });
     } catch (e) {
-      console.error('Login error:', e.message);
-      res.status(500).json({ error: 'Login failed. Please try again.' });
+      console.error('Firebase auth error:', e.message);
+      res.status(500).json({ error: 'Authentication failed' });
     }
   });
 
@@ -134,7 +85,7 @@ function createRouter(db) {
       var user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.userId);
       if (!user) return res.status(404).json({ error: 'User not found' });
       res.json({
-        id: user.id, username: user.username, email: user.email, name: user.name,
+        id: user.id, email: user.email, name: user.name,
         gender: user.gender, age: user.age, height: user.height, weight: user.weight,
         activityLevel: user.activity_level, cycleData: JSON.parse(user.cycle_data || '{}'), phone: user.phone
       });
