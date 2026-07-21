@@ -298,7 +298,7 @@ function enterApp() {
   // Hide auth-only nav elements
   var navUser = document.getElementById('nav-username');
   var logoutBtn = document.getElementById('btn-logout');
-  if (navUser) navUser.style.display = 'none';
+  if (navUser) { navUser.style.display = 'inline'; navUser.textContent = user.email || ''; }
   if (logoutBtn) logoutBtn.style.display = 'none';
 
   renderRoster();
@@ -3156,6 +3156,7 @@ function firebaseLogout() {
 function onFirebaseAuth(firebaseUser) {
   if (firebaseUser) {
     firebaseUserCache = firebaseUser;
+    user.email = firebaseUser.email;
     firebaseUser.getIdToken().then(function(token) {
       authToken = token;
       localStorage.setItem('baskug_token', token);
