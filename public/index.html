@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0A0A14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BASKUG LIFE">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>BASKUG ❤️ LIFE</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav id="main-nav" class="hidden">
+  <div class="nav-content">
+    <span class="logo">BASKUG ❤️ LIFE</span>
+    <div class="nav-right">
+      <span id="nav-username" class="nav-username"></span>
+      <button id="btn-logout" class="nav-logout-btn">🚪 Logout</button>
+      <button id="theme-toggle" class="theme-btn">🌙</button>
+    </div>
+  </div>
+</nav>
+
+<footer id="main-footer" class="hidden">
+  <p>BASKUG ❤️ LIFE — Plan your week. Balance your life.</p>
+  <p class="footer-heart">Made with <span class="heart">&hearts;</span> for a balanced life</p>
+</footer>
+
+<!-- HERO PAGE (full landing) -->
+<div id="view-hero" class="overlay active">
+  <div class="hero-mesh"></div>
+  <div class="hero-glow g1"></div>
+  <div class="hero-glow g2"></div>
+  <div class="hero-glow g3"></div>
+  <div class="hero-glow g4"></div>
+  <div class="hero-float-icons">
+    <span class="hfi" style="top:12%;left:8%;animation-delay:0s">🌿</span>
+    <span class="hfi" style="top:18%;right:12%;animation-delay:1.2s">⚡</span>
+    <span class="hfi" style="bottom:22%;left:14%;animation-delay:0.6s">🌟</span>
+    <span class="hfi" style="bottom:15%;right:10%;animation-delay:1.8s">🌙</span>
+    <span class="hfi" style="top:45%;left:5%;animation-delay:2.4s">🍃</span>
+    <span class="hfi" style="top:50%;right:6%;animation-delay:0.3s">💫</span>
+  </div>
+  <div class="hero-inner">
+    <div class="hero-badge">🌿 Wellness Platform</div>
+    <h1 class="hero-title">BASKUG <span class="h-heart">❤️</span> LIFE</h1>
+    <p class="hero-tag">Plan your week. <span class="h-accent">Balance your life.</span></p>
+    <p class="hero-desc">Track your wellness journey with smart planning,<br>personalised routines, and holistic health tools.</p>
+    <button class="btn hero-btn" id="btn-get-started">Get Started <span class="btn-arrow">→</span></button>
+    <div class="hero-features">
+      <div class="hf-item"><span>📅</span> Smart Planner</div>
+      <div class="hf-item"><span>🥗</span> Meal Tracker</div>
+      <div class="hf-item"><span>💪</span> Workout Log</div>
+      <div class="hf-item"><span>🧘</span> Wellness</div>
+    </div>
+    <p style="margin-top:10px;font-size:0.7rem;color:#6A7A8A" class="server-status-text"><span id="server-status">Checking server...</span></p>
+  </div>
+</div>
+
+<!-- AUTH OVERLAY (Login / Signup) -->
+<div id="view-auth" class="overlay">
+  <div class="overlay-card auth-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <span></span>
+      <button id="auth-close" style="background:none;border:none;font-size:1.4rem;color:var(--muted);cursor:pointer;padding:0 4px">&times;</button>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-atab="login">Log In</button>
+      <button class="auth-tab" data-atab="signup">Sign Up</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="auth-login">
+      <h3>Welcome Back</h3>
+      <p class="setup-sub">Sign in to access your dashboard</p>
+      <div class="auth-error" id="login-error"></div>
+      <div class="social-btns">
+        <button class="social-btn google-btn" id="login-google"><svg viewBox="0 0 48 48" width="18" height="18"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59A14.5 14.5 0 0 1 9.5 24c0-1.59.28-3.14.76-4.59l-7.98-6.19A23.99 23.99 0 0 0 0 24c0 3.77.87 7.35 2.56 10.56l7.97-5.97z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 5.97C6.51 42.62 14.62 48 24 48z"/></svg> Continue with Google</button>
+        <button class="social-btn apple-btn" id="login-apple"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg> Continue with Apple</button>
+        <button class="social-btn phone-btn" id="login-phone"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg> Phone number</button>
+      </div>
+      <div class="auth-divider">── or ──</div>
+      <div class="add-row" style="flex-direction:column;gap:10px">
+        <input type="email" id="login-email" placeholder="Email address" style="width:100%">
+        <input type="password" id="login-password" placeholder="Password" style="width:100%">
+        <button class="btn hero-btn" id="btn-login" style="width:100%">Log In <span class="btn-arrow">→</span></button>
+      </div>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="auth-signup" class="hidden">
+      <h3>Create Your Account</h3>
+      <p class="setup-sub">Start your wellness journey</p>
+      <div class="auth-error" id="signup-error"></div>
+      <div class="social-btns">
+        <button class="social-btn google-btn" id="signup-google"><svg viewBox="0 0 48 48" width="18" height="18"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59A14.5 14.5 0 0 1 9.5 24c0-1.59.28-3.14.76-4.59l-7.98-6.19A23.99 23.99 0 0 0 0 24c0 3.77.87 7.35 2.56 10.56l7.97-5.97z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 5.97C6.51 42.62 14.62 48 24 48z"/></svg> Sign up with Google</button>
+        <button class="social-btn apple-btn" id="signup-apple"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg> Sign up with Apple</button>
+        <button class="social-btn phone-btn" id="signup-phone-btn"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg> Phone number</button>
+      </div>
+      <div class="auth-divider">── or ──</div>
+      <div class="add-row" style="flex-direction:column;gap:8px">
+        <input type="text" id="signup-username" placeholder="Username" style="width:100%">
+        <input type="email" id="signup-email" placeholder="Email address" style="width:100%">
+        <input type="text" id="signup-name" placeholder="Full name" style="width:100%">
+        <div class="add-row" style="gap:6px">
+          <select id="signup-phone-code" style="width:90px;flex-shrink:0">
+            <option value="+1">🇺🇸 +1</option>
+            <option value="+44">🇬🇧 +44</option>
+            <option value="+63">🇵🇭 +63</option>
+            <option value="+91">🇮🇳 +91</option>
+            <option value="+86">🇨🇳 +86</option>
+            <option value="+81">🇯🇵 +81</option>
+            <option value="+82">🇰🇷 +82</option>
+            <option value="+61">🇦🇺 +61</option>
+            <option value="+49">🇩🇪 +49</option>
+            <option value="+33">🇫🇷 +33</option>
+            <option value="+39">🇮🇹 +39</option>
+            <option value="+55">🇧🇷 +55</option>
+            <option value="+52">🇲🇽 +52</option>
+            <option value="+7">🇷🇺 +7</option>
+            <option value="+971">🇦🇪 +971</option>
+            <option value="+966">🇸🇦 +966</option>
+            <option value="+234">🇳🇬 +234</option>
+            <option value="+27">🇿🇦 +27</option>
+            <option value="+84">🇻🇳 +84</option>
+            <option value="+62">🇮🇩 +62</option>
+            <option value="+92">🇵🇰 +92</option>
+            <option value="+880">🇧🇩 +880</option>
+          </select>
+          <input type="tel" id="signup-phone" placeholder="Phone number (optional)" style="flex:1">
+        </div>
+        <div class="add-row" style="gap:8px">
+          <select id="signup-gender" style="flex:1" required><option value="">Gender</option><option value="female">Female</option><option value="male">Male</option><option value="nonbinary">Non-binary</option><option value="transgender">Transgender</option><option value="bisexual">Bisexual</option><option value="genderqueer">Genderqueer</option><option value="genderfluid">Genderfluid</option><option value="agender">Agender</option><option value="intersex">Intersex</option><option value="other">Other</option></select>
+          <input type="number" id="signup-age" placeholder="Age" style="width:70px">
+        </div>
+        <input type="password" id="signup-password" placeholder="Password (min 6 characters)" style="width:100%">
+        <input type="password" id="signup-confirm" placeholder="Confirm password" style="width:100%">
+        <button class="btn hero-btn" id="btn-signup" style="width:100%">Create Account <span class="btn-arrow">→</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function testClick() {
+  var btn = document.getElementById('btn-signup');
+  if (btn) btn.innerHTML = '✅ Working!';
+}
+// Check server connection
+function checkServer() {
+  var el = document.getElementById('server-status');
+  if (!el) return;
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/', true);
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    if (xhr.status === 200 || xhr.status === 304) el.innerHTML = '🟢 Server connected';
+    else el.innerHTML = '🔴 Server error (' + xhr.status + ')';
+  };
+  xhr.onerror = function() { el.innerHTML = '🔴 Offline'; };
+  xhr.send();
+}
+checkServer();
+</script>
+
+<!-- SETUP OVERLAY -->
+<div id="view-setup" class="overlay">
+  <div class="overlay-card">
+    <h2>👋 Let's get to know you</h2>
+    <p class="setup-sub">Helps personalise your dashboard.</p>
+    <form id="profile-form">
+      <div class="form-group">
+        <label>What should we call you?</label>
+        <input type="text" id="profile-name" placeholder="Your name" required>
+      </div>
+      <div class="form-group">
+        <label>Gender</label>
+        <select id="profile-gender" required>
+          <option value="">Select gender</option>
+          <option value="female">Female</option>
+          <option value="male">Male</option>
+          <option value="nonbinary">Non-binary</option>
+          <option value="transgender">Transgender</option>
+          <option value="bisexual">Bisexual</option>
+          <option value="genderqueer">Genderqueer</option>
+          <option value="genderfluid">Genderfluid</option>
+          <option value="agender">Agender</option>
+          <option value="intersex">Intersex</option>
+          <option value="other">Other / Prefer to self-describe</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>How old are you?</label>
+        <input type="number" id="profile-age" placeholder="25" min="1" max="120">
+      </div>
+      <div class="form-disclaimer">⚕️ Not medical advice. All data is stored locally.</div>
+      <button type="submit" class="btn btn-full">Save &amp; Open Dashboard</button>
+    </form>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app-main" class="hidden">
+
+  <!-- DASHBOARD HUB -->
+  <section id="section-dashboard">
+    <div class="container">
+      <div class="dash-top">
+        <div>
+          <h2>Hi <span id="dash-name">there</span>, what's up for today 🌿</h2>
+          <p class="dash-sub">Your personal wellness dashboard</p>
+        </div>
+        <button id="btn-edit-profile" class="btn-sm btn-outline">Edit Profile</button>
+      </div>
+      <div class="dash-about">
+        <p><strong>BASKUG ❤️ LIFE</strong> is your all-in-one lifestyle companion. Plan your week, track your body, understand your cycle, balance your energy, and reflect on your growth — all in one place. Everything stays private on your device.</p>
+      </div>
+
+      <!-- PHONE-STYLE WIDGET CAROUSEL -->
+      <div class="widget-carousel" id="widget-carousel">
+        <button class="widget-arrow widget-prev" id="widget-prev" aria-label="Previous">‹</button>
+        <div class="widget-track" id="widget-track">
+          <div class="widget-card" data-dim="planner" style="--wc-color:#4CAF50;--wc-bg:#E8F5E9">
+            <div class="wc-icon">📅</div>
+            <div class="wc-title">Planner</div>
+            <div class="wc-desc">Schedule your week</div>
+          </div>
+          <div class="widget-card" data-dim="body" style="--wc-color:#42A5F5;--wc-bg:#E3F2FD">
+            <div class="wc-icon">🧍</div>
+            <div class="wc-title">Body</div>
+            <div class="wc-desc">BMI &amp; insights</div>
+          </div>
+          <div class="widget-card" data-dim="women" style="--wc-color:#D4899E;--wc-bg:#FCE4EC">
+            <div class="wc-icon">🌸</div>
+            <div class="wc-title">Women</div>
+            <div class="wc-desc">Cycle &amp; calendar</div>
+          </div>
+          <div class="widget-card" data-dim="balance" style="--wc-color:#FFA726;--wc-bg:#FFF3E0">
+            <div class="wc-icon">⚖️</div>
+            <div class="wc-title">Balance</div>
+            <div class="wc-desc">Energy score</div>
+          </div>
+          <div class="widget-card" data-dim="reflect" style="--wc-color:#AB47BC;--wc-bg:#F3E5F5">
+            <div class="wc-icon">💭</div>
+            <div class="wc-title">Reflect</div>
+            <div class="wc-desc">Journal &amp; reflect</div>
+          </div>
+          <div class="widget-card" data-dim="meals" style="--wc-color:#FF7043;--wc-bg:#FBE9E7">
+            <div class="wc-icon">🥗</div>
+            <div class="wc-title">Meals</div>
+            <div class="wc-desc">Track nutrition</div>
+          </div>
+          <div class="widget-card" data-dim="workout" style="--wc-color:#26A69A;--wc-bg:#E0F2F1">
+            <div class="wc-icon">💪</div>
+            <div class="wc-title">Workout</div>
+            <div class="wc-desc">Exercise log</div>
+          </div>
+          <div class="widget-card" data-dim="routines" style="--wc-color:#5C6BC0;--wc-bg:#E8EAF6">
+            <div class="wc-icon">🔄</div>
+            <div class="wc-title">Routines</div>
+            <div class="wc-desc">Daily habits</div>
+          </div>
+          <div class="widget-card" data-dim="hobbies" style="--wc-color:#EC407A;--wc-bg:#FCE4EC">
+            <div class="wc-icon">🎯</div>
+            <div class="wc-title">Hobbies</div>
+            <div class="wc-desc">Leisure &amp; passion</div>
+          </div>
+          <div class="widget-card" data-dim="remedies" style="--wc-color:#66BB6A;--wc-bg:#E8F5E9">
+            <div class="wc-icon">🌿</div>
+            <div class="wc-title">Remedies</div>
+            <div class="wc-desc">Natural wellness</div>
+          </div>
+
+          <div class="widget-card" data-dim="meditation" style="--wc-color:#7E57C2;--wc-bg:#EDE7F6">
+            <div class="wc-icon">🧘</div>
+            <div class="wc-title">Meditate</div>
+            <div class="wc-desc">Guided sessions</div>
+          </div>
+          <div class="widget-card" data-dim="soundscapes" style="--wc-color:#29B6F6;--wc-bg:#E1F5FE">
+            <div class="wc-icon">🎵</div>
+            <div class="wc-title">Soundscapes</div>
+            <div class="wc-desc">Nature sounds</div>
+          </div>
+        </div>
+        <button class="widget-arrow widget-next" id="widget-next" aria-label="Next">›</button>
+      </div>
+      <div class="widget-dots" id="widget-dots"></div>
+
+      <!-- FEATURE GRID (for female / other) -->
+      <div class="feature-grid" id="feature-grid">
+        <button class="feature-btn" data-dim="planner" style="--w-color:#4CAF50;--w-bg:#E8F5E9"><span class="fb-icon">📅</span><span class="fb-title">Planner</span><span class="fb-desc">Schedule your week</span></button>
+        <button class="feature-btn" data-dim="body" style="--w-color:#42A5F5;--w-bg:#E3F2FD"><span class="fb-icon">🧍</span><span class="fb-title">Body</span><span class="fb-desc">BMI &amp; insights</span></button>
+        <button class="feature-btn" data-dim="women" style="--w-color:#D4899E;--w-bg:#FCE4EC"><span class="fb-icon">🌸</span><span class="fb-title">Women</span><span class="fb-desc">Cycle &amp; calendar</span></button>
+        <button class="feature-btn" data-dim="balance" style="--w-color:#FFA726;--w-bg:#FFF3E0"><span class="fb-icon">⚖️</span><span class="fb-title">Balance</span><span class="fb-desc">Energy score</span></button>
+        <button class="feature-btn" data-dim="reflect" style="--w-color:#AB47BC;--w-bg:#F3E5F5"><span class="fb-icon">💭</span><span class="fb-title">Reflect</span><span class="fb-desc">Journal &amp; reflect</span></button>
+        <button class="feature-btn" data-dim="meals" style="--w-color:#FF7043;--w-bg:#FBE9E7"><span class="fb-icon">🥗</span><span class="fb-title">Meals</span><span class="fb-desc">Track nutrition</span></button>
+        <button class="feature-btn" data-dim="workout" style="--w-color:#26A69A;--w-bg:#E0F2F1"><span class="fb-icon">💪</span><span class="fb-title">Workout</span><span class="fb-desc">Exercise log</span></button>
+        <button class="feature-btn" data-dim="routines" style="--w-color:#5C6BC0;--w-bg:#E8EAF6"><span class="fb-icon">🔄</span><span class="fb-title">Routines</span><span class="fb-desc">Daily habits</span></button>
+        <button class="feature-btn" data-dim="hobbies" style="--w-color:#EC407A;--w-bg:#FCE4EC"><span class="fb-icon">🎯</span><span class="fb-title">Hobbies</span><span class="fb-desc">Leisure &amp; passion</span></button>
+        <button class="feature-btn" data-dim="remedies" style="--w-color:#66BB6A;--w-bg:#E8F5E9"><span class="fb-icon">🌿</span><span class="fb-title">Remedies</span><span class="fb-desc">Natural wellness</span></button>
+
+        <button class="feature-btn" data-dim="meditation" style="--w-color:#7E57C2;--w-bg:#EDE7F6"><span class="fb-icon">🧘</span><span class="fb-title">Meditate</span><span class="fb-desc">Guided sessions</span></button>
+        <button class="feature-btn" data-dim="soundscapes" style="--w-color:#29B6F6;--w-bg:#E1F5FE"><span class="fb-icon">🎵</span><span class="fb-title">Soundscapes</span><span class="fb-desc">Nature sounds</span></button>
+      </div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-val" id="stat-bmi">--</div><div class="stat-lbl">BMI</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-bal">--</div><div class="stat-lbl">Balance</div></div>
+        <div class="stat-card hidden" id="stat-cycle-card"><div class="stat-val" id="stat-cycle-val">--</div><div class="stat-lbl">Cycle</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-blocks">0</div><div class="stat-lbl">Blocks</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-meals">0</div><div class="stat-lbl">Meals</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-workouts">0</div><div class="stat-lbl">Workouts</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-routines">0%</div><div class="stat-lbl">Routines</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-hobbies">0h</div><div class="stat-lbl">Hobbies</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIMENSION OVERLAYS -->
+  <div id="dim-planner" class="dim">
+    <div class="dim-top">
+      <button class="dim-back" data-dim="planner">← Back</button>
+      <h2>📅 Planner</h2>
+      <div></div>
+    </div>
+    <div class="dim-body">
+      <div class="container">
+        <!-- Planner tabs -->
+        <div class="planner-tabs">
+          <button class="planner-tab active" data-ptab="work">💼 Work</button>
+          <button class="planner-tab" data-ptab="weekly">📆 Weekly</button>
+          <button class="planner-tab" data-ptab="monthly">🗓️ Monthly</button>
+          <button class="planner-tab" data-ptab="routines">🔄 Routines</button>
+        </div>
+
+        <!-- WORK PLANNER -->
+        <div class="planner-section" data-psection="work">
+          <div class="planner-top">
+            <span style="font-size:0.82rem;color:var(--muted)">Tap a day to add. Tap an entry to edit.</span>
+          </div>
+          <div class="work-week" id="work-week"></div>
+          <div class="add-block hidden" id="work-add-block">
+            <h4><span id="work-form-title">➕ Add for </span><span id="work-form-day"></span></h4>
+            <div class="add-row">
+              <input type="text" id="work-place" placeholder="e.g. GYG, Coffee Shop" style="flex:1.5" list="work-places">
+              <datalist id="work-places">
+                <option value="GYG"><option value="Coffee Shop"><option value="Office"><option value="Client Site"><option value="School"><option value="Hospital">
+              </datalist>
+              <input type="text" id="work-role" placeholder="Role (e.g. Barista)" style="flex:1.2" list="work-roles">
+              <datalist id="work-roles">
+                <option value="Line"><option value="Chef"><option value="Head Chef"><option value="Cook"><option value="Prep"><option value="Barista">
+                <option value="Bartender"><option value="Server"><option value="Host"><option value="Sales"><option value="Drive Thru">
+                <option value="Cashier"><option value="Manager"><option value="Supervisor"><option value="Team Lead"><option value="Trainer">
+              </datalist>
+              <input type="time" id="work-start" value="09:00" style="width:100px">
+              <input type="time" id="work-end" value="17:00" style="width:100px">
+              <button class="btn-sm" id="save-work-btn">Add</button>
+              <button class="btn-sm btn-outline" id="cancel-work-btn">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- WEEKLY PLANNER -->
+        <div class="planner-section hidden" data-psection="weekly">
+          <div class="planner-top">
+            <button id="reset-week" class="btn-sm btn-outline">Reset Week</button>
+            <span style="font-size:0.78rem;color:var(--muted)">Tap a day to add. Tap an entry to edit.</span>
+          </div>
+          <div class="cat-legend">
+            <span><span class="cat-dot" style="background:var(--c-prod)"></span>💼 Work</span>
+            <span><span class="cat-dot" style="background:var(--c-life)"></span>🏠 Life</span>
+            <span><span class="cat-dot" style="background:var(--c-growth)"></span>🌿 Growth</span>
+            <span><span class="cat-dot" style="background:var(--c-fun)"></span>🎮 Fun</span>
+            <span><span class="cat-dot" style="background:var(--c-rest)"></span>🧘 Rest</span>
+          </div>
+          <div class="work-week" id="week-grid"></div>
+          <div class="add-block hidden" id="week-add-block">
+            <h4><span id="week-form-title">➕ Add for </span><span id="week-form-day"></span></h4>
+            <div class="add-row">
+              <select id="week-category" style="width:110px">
+                <option value="productive">💼 Work</option>
+                <option value="life">🏠 Life</option>
+                <option value="growth">🌿 Growth</option>
+                <option value="fun">🎮 Fun</option>
+                <option value="rest">🧘 Rest</option>
+              </select>
+              <input type="text" id="week-activity" placeholder="Activity" style="flex:1.5">
+              <input type="time" id="week-start" value="10:00" style="width:100px">
+              <input type="time" id="week-end" value="11:00" style="width:100px">
+              <button class="btn-sm" id="save-week-btn">Add</button>
+              <button class="btn-sm btn-outline" id="cancel-week-btn">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MONTHLY CALENDAR -->
+        <div class="planner-section hidden" data-psection="monthly">
+          <div class="planner-top">
+            <div class="cal-nav">
+              <button class="date-btn" id="mcal-prev">←</button>
+              <span class="cal-month" id="mcal-label"></span>
+              <button class="date-btn" id="mcal-next">→</button>
+              <button class="date-btn date-today" id="mcal-today">Today</button>
+            </div>
+          </div>
+          <div class="mcal-grid" id="mcal-grid"></div>
+          <div class="mcal-legend">
+            <span><span class="mcal-dot" style="background:var(--c-prod)"></span> Work</span>
+            <span><span class="mcal-dot" style="background:var(--c-life)"></span> Life</span>
+            <span><span class="mcal-dot" style="background:var(--c-growth)"></span> Growth</span>
+            <span><span class="mcal-dot" style="background:var(--c-fun)"></span> Fun</span>
+            <span><span class="mcal-dot" style="background:var(--c-rest)"></span> Rest</span>
+          </div>
+          <div class="mcal-detail" id="mcal-detail">
+            <h4 id="mcal-date-title">Select a day</h4>
+            <div class="mcal-blocks" id="mcal-blocks"></div>
+            <div class="add-block" id="mcal-add-block">
+              <div class="add-row">
+                <input type="text" id="mcal-activity" placeholder="Activity">
+                <input type="time" id="mcal-start" value="10:00">
+                <input type="time" id="mcal-end" value="11:00">
+                <select id="mcal-category">
+                  <option value="productive">Productive</option>
+                  <option value="life">Life Tasks</option>
+                  <option value="growth">Growth</option>
+                  <option value="fun">Fun</option>
+                  <option value="rest">Rest</option>
+                </select>
+                <button class="btn-sm" id="mcal-add-btn">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DAILY ROUTINES -->
+        <div class="planner-section hidden" data-psection="routines">
+          <div class="planner-top">
+            <span style="font-size:0.82rem;color:var(--muted)">Your suggested daily schedule based on your profile</span>
+          </div>
+          <div class="routines-timeline" id="routines-timeline"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="dim-body" class="dim">
+    <div class="dim-top">
+      <button class="dim-back" data-dim="body">← Back</button>
+      <h2>🧍 Your Body Overview</h2>
+      <div></div>
+    </div>
+    <div class="dim-body">
+      <div class="container">
+        <div class="body-grid">
+          <div class="bmi-card">
+            <div class="ring-wrap">
+              <svg viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="var(--border)" stroke-width="8"/>
+                <circle class="bmi-arc" cx="60" cy="60" r="52" fill="none" stroke="var(--primary)" stroke-width="8" stroke-dasharray="326" stroke-dashoffset="200" stroke-linecap="round" transform="rotate(-90 60 60)"/>
+              </svg>
+              <div class="ring-num" id="bmi-number">--</div>
+              <div class="ring-lbl">BMI</div>
+            </div>
+            <div class="bmi-cat" id="bmi-category">--</div>
+            <div class="bmi-rows">
+              <div><span>Height</span><span id="bmi-height">--</span></div>
+              <div><span>Weight</span><span id="bmi-weight">--</span></div>
+              <div><span>Activity</span><span id="bmi-activity">--</span></div>
+            </div>
+            <button id="btn-update-body" class="btn-sm btn-outline">Update Measurements</button>
+          </div>
+          <div class="body-insights">
+            <h3>💡 Insights</h3>
+            <div class="insight">
+              <div class="insight-icon">⚡</div>
+              <div><strong>Energy</strong><p id="insight-energy">Complete your profile.</p></div>
+            </div>
+            <div class="insight">
+              <div class="insight-icon">😴</div>
+              <div><strong>Rest</strong><p id="insight-rest">Your rest needs will appear here.</p></div>
+            </div>
+            <div class="insight">
+              <div class="insight-icon">💧</div>
+              <div><strong>Hydration</strong><p id="insight-hydration">Aim for 6-8 glasses daily.</p></div>
+          </div>
+        </div>
+        <details class="wo-presets">
+          <summary>🧘 Pilates Routines — Quick Add</summary>
+          <div class="pilates-presets" id="pilates-presets"></div>
+        </details>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div id="dim-women" class="dim">
+    <div class="dim-top">
+      <button class="dim-back" data-dim="women">← Back</button>
+      <h2>🌸 Women's Health</h2>
+      <div></div>
+    </div>
+    <div class="dim-body">
+      <div class="container">
+
+        <div class="cycle-grid">
+          <div class="cycle-card">
+            <h3>📆 Prediction</h3>
+            <div id="cycle-pred-text"><p>Set your cycle data to see predictions.</p></div>
+            <div class="cycle-dates" id="cycle-dates"></div>
+          </div>
+          <div class="cycle-card">
+            <h3>🌙 Current Phase</h3>
+            <div class="phase-icon" id="phase-icon">🌑</div>
+            <div class="phase-name" id="phase-name">--</div>
+            <p class="phase-desc" id="phase-desc">Complete your profile.</p>
+          </div>
+          <div class="cycle-card">
+            <h3>💡 Tips</h3>
+            <ul id="cycle-tips"><li>Track your cycle for personalized tips.</li></ul>
+          </div>
+        </div>
+
+        <div class="w-card">
+          <div class="w-card-head"><h3>📋 Log Symptoms</h3><span class="w-card-date" id="symptom-date-label">Today</span></div>
+          <div class="symp-grid" id="symp-grid"></div>
+          <div class="symp-actions"><button class="btn-sm" id="symp-save">Save Today's Symptoms</button><span class="symp-saved" id="symp-saved">Saved!</span></div>
+          <div class="symp-log" id="symp-log"><p class="muted" style="padding:8px 0;">No symptoms logged yet.</p></div>
+        </div>
+
+        <div class="w-row-2">
+          <div class="w-card">
+            <div class="w-card-head"><h3>🌿 Self-Care</h3><span class="phase-badge" id="sc-phase-badge">--</span></div>
+            <ul id="sc-list" class="w-list"><li class="muted">Set your cycle data to see recommendations.</li></ul>
+          </div>
+          <div class="w-card">
+            <div class="w-card-head"><h3>✨ Skin Care</h3><span class="phase-badge" id="skin-phase-badge">--</span></div>
+            <ul id="skin-list" class="w-list"><li class="muted">Set your cycle data to see recommendations.</li></ul>
+          </div>
+        </div>
+
+        <div class="w-card">
+          <div class="w-card-head"><h3>🧬 Hormones</h3><span class="phase-badge" id="hormone-phase-badge">--</span></div>
+          <div class="hormone-grid" id="hormone-grid"></div>
+        </div>
+
+        <div class="w-card">
+          <div class="w-card-head"><h3>📊 Cycle Analysis</h3></div>
+          <div class="analysis-grid" id="analysis-grid"></div>
+          <div class="analysis-insight" id="analysis-insight"></div>
+        </div>
+
+        <div class="w-card" id="pcos-section">
+          <div class="w-card-head"><h3>💪 PCOS Workout</h3></div>
+          <p style="color:var(--muted);font-size:0.82rem;margin-bottom:12px">Exercise helps manage PCOS by improving insulin sensitivity, reducing inflammation, and balancing hormones.</p>
+          <div class="pcos-grid" id="pcos-grid"></div>
+          <div class="pcos-tips" id="pcos-tips"></div>
+        </div>
+
+        <div class="cal-wrap">
+          <div class="cal-head">
+            <h3>🗓️ Period Calendar</h3>
+            <button class="btn-sm btn-outline" id="cal-setup-btn">Set Cycle Data</button>
+          </div>
+          <div class="cal-nav">
+            <button class="date-btn" id="cal-prev">←</button>
+            <span class="cal-month" id="cal-month-label"></span>
+            <button class="date-btn" id="cal-next">→</button>
+            <button class="date-btn date-today" id="cal-today">Today</button>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+          <div class="cal-legend">
+            <span><span class="leg-dot leg-period"></span> Period</span>
+            <span><span class="leg-dot leg-pred"></span> Predicted</span>
+            <span><span class="leg-dot leg-today"></span> Today</span>
+          </div>
+        </div>
+
+        <div id="cycle-settings" class="hidden">
+          <h4>🌸 Cycle Settings</h4>
+          <div class="cs-row">
+            <label>Last period: <input type="date" id="cal-last-period"></label>
+            <label>Cycle: <input type="number" id="cal-cycle-length" value="28" min="20" max="45" style="width:55px;"> days</label>
+            <button class="btn-sm" id="cal-save-settings">Save</button>
+            <button class="btn-sm btn-outline" id="cal-cancel-settings">Cancel</button>
+          </div>
+        </div>
+
+        <div class="cycle-disc">⚕️ For awareness only. Not medical advice.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="dim-balance" class="dim">
+    <div class="dim-top">
+      <button class="dim-back" data-dim="balance">← Back</button>
+      <h2>⚖️ Life Balance</h2>
+      <div></div>
+    </div>
+    <div class="dim-body">
+      <div class="container">
+        <div class="bal-card">
+          <div class="ring-wrap">
+            <svg viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="52" fill="none" stroke="var(--border)" stroke-width="8"/>
+              <circle class="score-arc" cx="60" cy="60" r="52" fill="none" stroke="var(--primary)" stroke-width="8" stroke-dasharray="326" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 60 60)"/>
+            </svg>
+            <div class="ring-num" id="score-number">--</div>
+            <div class="ring-lbl">Energy</div>
+          </div>
+          <div class="score-status" id="score-status">Add schedule data to see your score.</div>
+        </div>
+        <div class="bal-grid" id="bal-grid"></div>
+        <div class="bal-breakdown">
+          <h3>📊 Breakdown</h3>
+          <div id="bal-breakdown"><p class="muted">Add blocks to your planner.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="dim-reflect" class="dim">
+    <div class="dim-top">
+      <button class="dim-back" data-dim="reflect">← Back</button>
+      <h2>💭 Weekly Reflection</h2>
+      <div></div>
+    </div>
+    <div class="dim-body">
+      <div class="container narrow">
+        <div class="ref-field">
+          <label>What went well?</label>
+          <textarea id="ref-well" rows="3" placeholder="I stayed consistent with coding..."></textarea>
+        </div>
+        <div class="ref-field">
+          <label>What was hard?</label>
+          <textarea id="ref-hard" rows="3" placeholder="I struggled with waking up early..."></textarea>
+        </div>
+        <div class="ref-field">
+          <label>What to improve next week?</label>
+          <textarea id="ref-improve" rows="3" placeholder="Add more rest time..."></textarea>
+        </div>
+        <button class="btn btn-full" id="save-reflection">Save Reflection</button>
+        <p class="ref-saved" id="ref-saved">Saved!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEALS DIMENSION -->
+  <div id="dim-meals" class="dim">
+    <div class="dim-top">
+      <button class="dim-back" data-dim="meals">← Back</button>
+      <h2>🥗 Meals</h2>
+      <div></div>
+    </div>
+    <div class="dim-body">
+      <div class="container narrow">
+        <div class="meal-tabs">
+          <button class="meal-tab active" data-mtab="log">📋 Log</button>
+          <button class="meal-tab" data-mtab="recipes">🍳 Recipes</button>
+          <button class="meal-tab" data-mtab="plan">📅 Meal Plan</button>
+        </div>
+        <div id="meal-log-section">
+          <div class="date-nav">
+            <button class="date-btn" data-move="-1" data-target="meals">←</button>
+            <span class="date-label" id="meal-date-label"></span>
+            <button class="date-btn" data-move="1" data-target="meals">→</button>
+            <button class="date-btn date-today" data-target="meals">Today</button>
+          </div>
+          <div id="meal-stats" class="feature-stats"></div>
+          <div id="meal-list"></div>
+          <div class="add-card">
+            <h4>➕ Add Meal</h4>
+            <div class="add-row">
+              <select id="meal-type">
+                <option value="breakfast">🍳 Breakfast</option>
+                <option value="lunch">🥪 Lunch</option>
+                <option value="dinner">🍝 Dinner</option>
+                <option value="snack">🍪 Snack</option>
+                <option value="beverage">🥤 Drink</option>
+              </select>
+              <input type="text" id="meal-food" placeholder="Food" style="flex:1;min-width:80px;">
+              <input type="time" id="meal-time" value="12:00" style="width:90px;">
+              <input type="number" id="meal-cal" placeholder="cal" style="width:60px;">
+              <button class="btn-sm" id="add-meal-btn">Add</button>
+            </div>
+          </div>
+        </div>
+        <div id="meal-recipes-section" class="hidden">
+          <div id="recipe-chat-btn" class="recipe-chat-btn" title="Ask about recipes">💬</div>
+          <div id="recipe-chat" class="recipe-chat hidden">
+            <div class="rc-header"><span>🥗 Recipe Assistant</span><button id="rc-close">&times;</button></div>
+            <div class="rc-messages" id="rc-messages"></div>
+            <div class="rc-input"><input type="text" id="rc-query" placeholder="Ask about recipes, ingredients, nutrition..."><button id="rc-send">Send</button></div>
+          </div>
+        </div>
+        <div id="meal-plan-section" class="hidden">
+          <div class="mp-week-nav">
+            <button class="mp-nav-btn" id="mp-prev">←</button>
+            <span id="mp-week-label"></span>
+            <button class="mp-nav-btn" id="mp-next">→</button>
+            <button class="mp-nav-btn mp-today" id="mp-today">This Week</button>
+          </div>
+          <div id="mp-grid"></div>
+          <div id="mp-cell-picker" class="mp-picker hidden">
+            <div class="mp-picker-header"><span id="mp-picker-title"></span><button id="mp-picker-close">&times;</button></div>
+            <div id="mp-picker-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKOUT DIMENSION -->
+  <div id="dim-workout" class="dim">
+    <div class="dim-top">
+      <button class="dim-back" data-dim="workout">← Back</button>
+      <h2>💪 Workout</h2>
+      <div></div>
+    </div>
+    <div class="dim-body">
+      <div class="container narrow">
+        <div class="date-nav">
+          <button class="date-btn" data-move="-1" data-target="workout">←</button>
+          <span class="date-label" id="workout-date-label"></span>
+          <button class="date-btn" data-move="1" data-target="workout">→</button>
+          <button class="date-btn date-today" data-target="workout">Today</button>
+        </div>
+        <div id="workout-summary" class="feature-stats"></div>
+        <div id="workout-list"></div>
+        <div class="add-card">
+          <h4>➕ Add Workout</h4>
+          <div class="add-row">
+            <select id="wo-type">
+              <option value="cardio">🏃 Cardio</option>
+              <option value="strength">🏋️ Strength</option>
+              <option value="pilates">🧘 Pilates</option>
+              <option value="yoga">🧘 Yoga</option>
+              <option value="walking">🚶 Walking</option>
+              <option value="sports">⚽ Sports</option>
+              <option value="other">🎯 Other</option>
+            </select>
+            <input type="text" id="wo-name" placeholder="Activity" style="flex:1;min-width:80px;">
+            <input type="number" id="wo-duration" placeholder="min" style="width:55px;">
+            <select id="wo-intensity" style="width:85px;">
+              <option value="light">Light</option>
+              <option value="moderate" selected>Moderate</option>
+              <option value="intense">Intense</option>
+            </select>
+            <button class="btn-sm" id="add-wo-btn">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROUTINES DIMENSION -->
+  <div id="dim-routines" class="dim">
+    <div class="dim-top">
+      <button class="dim-back" data-dim="routines">← Back</button>
+      <h2>🔄 Routines</h2>
+      <div></div>
+    </div>
+    <div class="dim-body">
+      <div class="container narrow">
+        <div id="routines-list"></div>
+        <div class="routines-add">
+          <div class="add-row">
+            <input type="text" id="routine-name" placeholder="New routine name (e.g. Morning)" style="flex:1;min-width:120px;">
+            <button class="btn-sm" id="add-routine-btn">Create Routine</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOBBIES DIMENSION -->
+  <div id="dim-hobbies" class="dim">
+    <div class="dim-top">
+      <button class="dim-back" data-dim="hobbies">← Back</button>
+      <h2>🎯 Hobbies</h2>
+      <div></div>
+    </div>
+    <div class="dim-body">
+      <div class="container narrow">
+        <div id="hobbies-list"></div>
+        <div class="add-card">
+          <h4>➕ New Hobby</h4>
+          <div class="add-row">
+            <input type="text" id="hobby-name" placeholder="Hobby name" style="flex:1;min-width:120px;">
+            <button class="btn-sm" id="add-hobby-btn">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REMEDIES DIMENSION -->
+  <div id="dim-remedies" class="dim">
+    <div class="dim-top">
+      <button class="dim-back" data-dim="remedies">← Back</button>
+      <h2>🌿 Natural Remedies</h2>
+      <div></div>
+    </div>
+    <div class="dim-body">
+      <div class="container">
+        <div class="remedy-grid" id="remedy-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEDITATION DIMENSION -->
+  <div id="dim-meditation" class="dim">
+    <div class="dim-top">
+      <button class="dim-back" data-dim="meditation">← Back</button>
+      <h2>🧘 Meditations</h2>
+      <div></div>
+    </div>
+    <div class="dim-body">
+      <div class="container narrow">
+        <div class="med-types" id="med-types"></div>
+        <div class="med-player" id="med-player">
+          <div class="breath-circle" id="breath-circle">
+            <div class="breath-inner">
+              <span class="breath-text" id="breath-text">Breathe</span>
+              <span class="breath-count" id="breath-count"></span>
+            </div>
+          </div>
+          <div class="med-controls">
+            <button class="btn" id="med-start-btn">Start Session</button>
+            <div class="med-duration">
+              <label>Duration: <select id="med-duration"><option value="60">1 min</option><option value="180" selected>3 min</option><option value="300">5 min</option><option value="600">10 min</option></select></label>
+            </div>
+          </div>
+          <div class="med-status" id="med-status">Choose a session type to begin.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOUNDSCAPES DIMENSION -->
+  <div id="dim-soundscapes" class="dim">
+    <div class="dim-top">
+      <button class="dim-back" data-dim="soundscapes">← Back</button>
+      <h2>🎵 Soundscapes</h2>
+      <div></div>
+    </div>
+    <div class="dim-body">
+      <div class="container narrow">
+        <p class="sound-desc">Tap a sound to play. Adjust volume with the slider.</p>
+        <div class="sound-grid" id="sound-grid"></div>
+        <div class="sound-player" id="sound-player">
+          <div class="sp-status" id="sp-status">Select a sound to play</div>
+          <button class="btn" id="sp-stop">Stop</button>
+        </div>
+        <iframe id="sound-frame" style="position:absolute;width:0;height:0;border:none" allow="autoplay" title="sound"></iframe>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app-main -->
+
+  <!-- VIDEO PLAYER MODAL -->
+  <div id="video-modal" class="video-modal hidden">
+    <div class="video-modal-backdrop"></div>
+    <div class="video-modal-content">
+      <button class="video-modal-close" id="video-close">&times;</button>
+      <div class="video-wrapper">
+        <iframe id="video-frame" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="script.js"></script>
+<script>
+// Register service worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(function(reg) {
+    console.log('SW registered:', reg.scope);
+  }).catch(function(err) {
+    console.warn('SW registration failed:', err);
+  });
+}
+
+// Socket.IO — real-time cross-device sync
+(function() {
+  var socket = null;
+  var _origApiPut = window.apiPut;
+  window.apiPut = function(key, data) {
+    if (_origApiPut) _origApiPut(key, data);
+    // Socket will handle sync via server broadcast
+  };
+
+  function connectSocket() {
+    if (!window.authToken) { setTimeout(connectSocket, 1000); return; }
+    if (socket && socket.connected) return;
+    try {
+      socket = io({ auth: { token: window.authToken } });
+      socket.on('connect', function() { console.log('🔌 Real-time connected'); });
+      socket.on('data-update', function(msg) {
+        console.log('🔄 Real-time update:', msg.key);
+        // If we're not the one who saved, reload that data
+        if (msg.key === 'baskug_schedule' && window.schedule) {
+          fetch('/api/data/baskug_schedule', { headers: { 'Authorization': 'Bearer ' + window.authToken } })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { if (d && d.monday) { window.schedule = d; if (window.renderWeekCards) window.renderWeekCards(); if (window.renderMonthlyCal) window.renderMonthlyCal(); if (window.renderDashboard) window.renderDashboard(); if (window.renderBalance) window.renderBalance(); } });
+        }
+        if (msg.key === 'baskug_meals' && window.mealsData) {
+          fetch('/api/data/baskug_meals', { headers: { 'Authorization': 'Bearer ' + window.authToken } })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { if (d) { window.mealsData = d; if (window.renderMeals) window.renderMeals(); } });
+        }
+        if (msg.key === 'baskug_workouts' && window.workoutData) {
+          fetch('/api/data/baskug_workouts', { headers: { 'Authorization': 'Bearer ' + window.authToken } })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { if (d) { window.workoutData = d; if (window.renderWorkouts) window.renderWorkouts(); } });
+        }
+        if (msg.key === 'baskug_user' && window.user) {
+          fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + window.authToken } })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { if (d) { window.user = d; if (window.renderDashboard) window.renderDashboard(); } });
+        }
+        if (msg.key === 'baskug_routines' && window.routineData) {
+          fetch('/api/data/baskug_routines', { headers: { 'Authorization': 'Bearer ' + window.authToken } })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { if (d) { window.routineData = d; if (window.renderRoutines) window.renderRoutines(); } });
+        }
+        if (msg.key === 'baskug_hobbies' && window.hobbyData) {
+          fetch('/api/data/baskug_hobbies', { headers: { 'Authorization': 'Bearer ' + window.authToken } })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { if (d) { window.hobbyData = d; if (window.renderHobbies) window.renderHobbies(); } });
+        }
+      });
+      socket.on('data-delete', function(msg) {
+        console.log('🗑️ Real-time delete:', msg.key);
+        if (msg.key === 'baskug_meals' && window.mealsData) { window.mealsData = {}; if (window.renderMeals) window.renderMeals(); }
+        if (msg.key === 'baskug_workouts' && window.workoutData) { window.workoutData = {}; if (window.renderWorkouts) window.renderWorkouts(); }
+      });
+      socket.on('disconnect', function() { console.log('🔌 Real-time disconnected'); setTimeout(connectSocket, 3000); });
+      socket.on('connect_error', function(err) { console.warn('🔌 Socket error:', err.message); setTimeout(connectSocket, 5000); });
+    } catch(e) { setTimeout(connectSocket, 5000); }
+  }
+  connectSocket();
+})();
+</script>
+</body>
+</html>
