@@ -3105,13 +3105,8 @@ function firebaseVerifyCode() {
 function firebaseGoogleSignIn() {
   showAuthError('');
   var provider = new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithPopup(provider)
-    .then(function() {
-      hideOverlay('view-auth');
-    })
-    .catch(function(e) {
-      showAuthError(firebaseAuthErrorMessage(e));
-    });
+  // Use redirect instead of popup to avoid cross-origin postMessage issues
+  firebase.auth().signInWithRedirect(provider);
 }
 
 function firebaseAuthErrorMessage(e) {
@@ -3235,8 +3230,18 @@ document.addEventListener('DOMContentLoaded', function() {
   loadAll();
   bodyLock();
 
-  // Clear any stale redirect state
-  firebase.auth().getRedirectResult().then(function() {}).catch(function() {});
+  // Handle redirect result (signInWithRedirect returns to this page)
+  firebase.auth().getRedirectResult().then(function(result) {
+    if (result && result.user) {
+      hideOverlay('view-auth');
+    }
+  }).catch(function(e) {
+    var silent = ['auth/popup-closed-by-user','auth/user-cancelled','auth/cancelled-popup-request','auth/credential-already-in-use','auth/email-change-needs-verification'];
+    var code = e.code || '';
+    if (silent.indexOf(code) === -1) {
+      console.warn('Redirect result error:', e.code);
+    }
+  });
 
   // Firebase auth state listener (onIdTokenChanged also fires on token refresh)
   firebase.auth().onIdTokenChanged(function(user) {
