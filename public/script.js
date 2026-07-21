@@ -2528,37 +2528,47 @@ function updateWorkoutPlanProgress() {
 }
 
 function generateWorkoutPlan() {
-  if (!authToken) { alert('Please log in to generate a workout plan.'); return; }
   var prefs = {
     goal: document.getElementById('wp-goal').value,
     style: document.getElementById('wp-style').value,
     intensity: document.getElementById('wp-intensity').value,
     days_per_week: parseInt(document.getElementById('wp-days').value)
   };
-  var genBtn = document.getElementById('wp-gen-btn');
-  if (genBtn) { genBtn.textContent = 'Generating...'; genBtn.disabled = true; }
-  fetch('/api/workout/plan/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-    body: JSON.stringify({ preferences: prefs })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(plan) {
-    if (plan && plan.plan) {
-      workoutPlan = plan;
-      localStorage.setItem('baskug_workout_plan', JSON.stringify(plan));
-      renderWorkoutPlan();
-      renderDashboard();
-    } else if (plan.error) {
-      alert('Error: ' + plan.error);
-    }
-  })
-  .catch(function(err) {
-    alert('Failed to generate plan: ' + err.message);
-  })
-  .finally(function() {
-    if (genBtn) { genBtn.textContent = 'Generate Plan'; genBtn.disabled = false; }
-  });
+
+  if (authToken) {
+    // Server-side: syncs across devices
+    var genBtn = document.getElementById('wp-gen-btn');
+    if (genBtn) { genBtn.textContent = 'Generating...'; genBtn.disabled = true; }
+    fetch('/api/workout/plan/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+      body: JSON.stringify({ preferences: prefs })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(plan) {
+      if (plan && plan.plan) {
+        workoutPlan = plan;
+        localStorage.setItem('baskug_workout_plan', JSON.stringify(plan));
+        renderWorkoutPlan();
+        renderDashboard();
+      } else if (plan.error) {
+        alert('Error: ' + plan.error);
+      }
+    })
+    .catch(function(err) {
+      alert('Failed to generate plan: ' + err.message);
+    })
+    .finally(function() {
+      if (genBtn) { genBtn.textContent = 'Generate Plan'; genBtn.disabled = false; }
+    });
+  } else {
+    // Client-side: works offline
+    var plan = wpGeneratePlan(prefs);
+    workoutPlan = plan;
+    localStorage.setItem('baskug_workout_plan', JSON.stringify(plan));
+    renderWorkoutPlan();
+    renderDashboard();
+  }
 }
 
 // ===== ROUTINES =====

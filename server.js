@@ -7,8 +7,8 @@ var cookieParser = require('cookie-parser');
 var path = require('path');
 var fs = require('fs');
 var http = require('http');
-var Database = require('better-sqlite3');
 var { Server } = require('socket.io');
+var Database = require('better-sqlite3');
 var jwt = require('jsonwebtoken');
 
 var { auth } = require('./middleware/auth');
