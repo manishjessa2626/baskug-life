@@ -2721,6 +2721,10 @@ function updateWorkoutPlanProgress() {
 }
 
 function generateWorkoutPlan() {
+  // Clear stale plan data before generating
+  workoutPlan = null;
+  localStorage.removeItem('baskug_workout_plan');
+
   var prefs = {
     goal: document.getElementById('wp-goal').value,
     intensity: document.getElementById('wp-intensity').value
@@ -3156,6 +3160,10 @@ function handleLogout() {
   fetch('/api/auth/logout', { method: 'POST' }).catch(function() {});
   authToken = null;
   localStorage.removeItem('baskug_token');
+  localStorage.removeItem('baskug_workout_plan');
+  localStorage.removeItem('baskug_workout_done');
+  workoutPlan = null;
+  workoutDone = {};
   user = {};
   document.body.removeAttribute('data-gender');
   document.getElementById('app-main').classList.remove('active');

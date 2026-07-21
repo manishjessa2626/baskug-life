@@ -1,4 +1,4 @@
-var CACHE = 'baskug-v1';
+var CACHE = 'baskug-v2';
 var ASSETS = [
   '/',
   '/index.html',
