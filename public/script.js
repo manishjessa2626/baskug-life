@@ -3105,7 +3105,13 @@ function firebaseVerifyCode() {
 function firebaseGoogleSignIn() {
   showAuthError('');
   var provider = new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithRedirect(provider);
+  firebase.auth().signInWithPopup(provider)
+    .then(function() {
+      hideOverlay('view-auth');
+    })
+    .catch(function(e) {
+      showAuthError(firebaseAuthErrorMessage(e));
+    });
 }
 
 function firebaseAuthErrorMessage(e) {
@@ -3229,12 +3235,8 @@ document.addEventListener('DOMContentLoaded', function() {
   loadAll();
   bodyLock();
 
-  // Handle redirect result (for Google sign-in with redirect)
-  firebase.auth().getRedirectResult().catch(function(e) {
-    // Prevent error from showing if user just cancelled
-    if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
-    showAuthError(firebaseAuthErrorMessage(e));
-  });
+  // Clear any stale redirect state
+  firebase.auth().getRedirectResult().then(function() {}).catch(function() {});
 
   // Firebase auth state listener (onIdTokenChanged also fires on token refresh)
   firebase.auth().onIdTokenChanged(function(user) {
