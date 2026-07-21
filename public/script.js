@@ -312,13 +312,33 @@ function enterApp() {
 // ===== PROFILE =====
 function saveProfile(e) {
   e.preventDefault();
-  user.name = document.getElementById('profile-name').value.trim();
-  user.gender = document.getElementById('profile-gender').value;
-  user.age = document.getElementById('profile-age').value;
+  var newName = document.getElementById('profile-name').value.trim();
+  var newGender = document.getElementById('profile-gender').value;
+  var newAge = document.getElementById('profile-age').value;
+
+  if (!newName) { alert('Please enter your name.'); return; }
+  if (!newGender) { alert('Please select your gender — it personalises your dashboard.'); return; }
+
+  // Check if switching to a different person (non-authed users share localStorage)
+  var oldName = user.name || '';
+  var hasExistingData = localStorage.getItem('baskug_workouts') || localStorage.getItem('baskug_meals') || localStorage.getItem('baskug_workout_plan');
+  if (!authToken && oldName && oldName !== newName && hasExistingData) {
+    if (!confirm('This will clear all existing data (' + oldName + '\'s logs, meals, workouts, etc.) and start fresh for ' + newName + '. Continue?')) {
+      return;
+    }
+    // Clear all user data from localStorage
+    var keys = ['baskug_schedule','baskug_work','baskug_meals','baskug_workouts','baskug_routines','baskug_routine_log','baskug_hobbies','baskug_symptoms','baskug_mealplan','baskug_workout_plan','baskug_workout_done'];
+    keys.forEach(function(k) { localStorage.removeItem(k); });
+    mealsData = {}; workoutData = {}; routineData = []; routineDone = {};
+    hobbyData = []; symptomsData = {}; schedule = {}; workSchedule = {};
+    workoutPlan = null; workoutDone = {};
+  }
+
+  user.name = newName;
+  user.gender = newGender;
+  user.age = newAge;
   user.createdAt = user.createdAt || new Date().toISOString();
 
-  if (!user.name) { alert('Please enter your name.'); return; }
-  if (!user.gender) { alert('Please select your gender — it personalises your dashboard.'); return; }
   setGenderTheme(user.gender);
   saveUser();
   // If authed, also save to API
