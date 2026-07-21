@@ -65,6 +65,42 @@ var WP_EXERCISES = [
   { id:'wp_chaturanga', name:'Chaturanga', muscle:'Full Body', style:'yoga', intensity:'intermediate', focus:'push', equipment:[] },
   { id:'wp_bridge', name:'Bridge Pose', muscle:'Back', style:'yoga', intensity:'all', focus:'pull', equipment:[] },
   { id:'wp_boat', name:'Boat Pose', muscle:'Core', style:'yoga', intensity:'all', focus:'core', equipment:[] },
+
+  // ========== GYM MACHINES ==========
+  { id:'wp_leg_press_m', name:'Leg Press Machine', muscle:'Legs', style:'gym', intensity:'all', focus:'legs', equipment:['Leg Press Machine'] },
+  { id:'wp_leg_ext', name:'Leg Extension Machine', muscle:'Legs', style:'gym', intensity:'all', focus:'legs', equipment:['Leg Extension Machine'] },
+  { id:'wp_leg_curl', name:'Leg Curl Machine', muscle:'Legs', style:'gym', intensity:'all', focus:'legs', equipment:['Leg Curl Machine'] },
+  { id:'wp_hack_squat', name:'Hack Squat Machine', muscle:'Legs', style:'gym', intensity:'all', focus:'legs', equipment:['Hack Squat Machine'] },
+  { id:'wp_hip_abductor', name:'Hip Abductor Machine', muscle:'Legs', style:'gym', intensity:'all', focus:'legs', equipment:['Hip Abductor Machine'] },
+  { id:'wp_hip_adductor', name:'Hip Adductor Machine', muscle:'Legs', style:'gym', intensity:'all', focus:'legs', equipment:['Hip Adductor Machine'] },
+  { id:'wp_smith_squat', name:'Smith Machine Squat', muscle:'Legs', style:'gym', intensity:'all', focus:'legs', equipment:['Smith Machine'] },
+  { id:'wp_chest_press_m', name:'Chest Press Machine', muscle:'Chest', style:'gym', intensity:'all', focus:'push', equipment:['Chest Press Machine'] },
+  { id:'wp_pec_deck', name:'Pec Deck Machine', muscle:'Chest', style:'gym', intensity:'all', focus:'push', equipment:['Pec Deck Machine'] },
+  { id:'wp_cable_fly', name:'Cable Crossover Fly', muscle:'Chest', style:'gym', intensity:'all', focus:'push', equipment:['Cable Crossover'] },
+  { id:'wp_incline_chest_m', name:'Incline Chest Press Machine', muscle:'Chest', style:'gym', intensity:'all', focus:'push', equipment:['Chest Press Machine'] },
+  { id:'wp_smith_incline', name:'Smith Machine Incline Press', muscle:'Chest', style:'gym', intensity:'intermediate', focus:'push', equipment:['Smith Machine'] },
+  { id:'wp_lat_pulldown_m', name:'Lat Pulldown Machine', muscle:'Back', style:'gym', intensity:'all', focus:'pull', equipment:['Lat Pulldown Machine'] },
+  { id:'wp_seated_row_m', name:'Seated Cable Row Machine', muscle:'Back', style:'gym', intensity:'all', focus:'pull', equipment:['Seated Row Machine'] },
+  { id:'wp_tbar_row', name:'T-Bar Row Machine', muscle:'Back', style:'gym', intensity:'intermediate', focus:'pull', equipment:['T-Bar Row Machine'] },
+  { id:'wp_assisted_pullup', name:'Assisted Pull-Up Machine', muscle:'Back', style:'gym', intensity:'all', focus:'pull', equipment:['Assisted Pull-Up Machine'] },
+  { id:'wp_cable_pullover', name:'Cable Pull-Over', muscle:'Back', style:'gym', intensity:'all', focus:'pull', equipment:['Cable Crossover'] },
+  { id:'wp_cable_face_pull', name:'Cable Face Pull', muscle:'Back', style:'gym', intensity:'all', focus:'pull', equipment:['Cable Crossover'] },
+  { id:'wp_shoulder_press_m', name:'Shoulder Press Machine', muscle:'Shoulders', style:'gym', intensity:'all', focus:'push', equipment:['Shoulder Press Machine'] },
+  { id:'wp_cable_lat_raise', name:'Cable Lateral Raise', muscle:'Shoulders', style:'gym', intensity:'all', focus:'push', equipment:['Cable Crossover'] },
+  { id:'wp_rev_pec_deck', name:'Reverse Pec Deck (Rear Delt)', muscle:'Shoulders', style:'gym', intensity:'all', focus:'pull', equipment:['Pec Deck Machine'] },
+  { id:'wp_smith_ohp', name:'Smith Machine Overhead Press', muscle:'Shoulders', style:'gym', intensity:'intermediate', focus:'push', equipment:['Smith Machine'] },
+  { id:'wp_cable_bicep', name:'Cable Bicep Curl', muscle:'Arms', style:'gym', intensity:'all', focus:'pull', equipment:['Cable Crossover'] },
+  { id:'wp_cable_tri', name:'Cable Tricep Pushdown', muscle:'Arms', style:'gym', intensity:'all', focus:'push', equipment:['Cable Crossover'] },
+  { id:'wp_preacher_m', name:'Preacher Curl Machine', muscle:'Arms', style:'gym', intensity:'all', focus:'pull', equipment:['Preacher Curl Machine'] },
+  { id:'wp_dip_m', name:'Assisted Dip Machine', muscle:'Arms', style:'gym', intensity:'all', focus:'push', equipment:['Assisted Dip Machine'] },
+  { id:'wp_treadmill', name:'Treadmill', muscle:'Cardio', style:'gym', intensity:'all', focus:'cardio', equipment:['Treadmill'] },
+  { id:'wp_elliptical', name:'Elliptical Trainer', muscle:'Cardio', style:'gym', intensity:'all', focus:'cardio', equipment:['Elliptical'] },
+  { id:'wp_stairmaster', name:'StairMaster', muscle:'Cardio', style:'gym', intensity:'all', focus:'cardio', equipment:['StairMaster'] },
+  { id:'wp_assault_bike', name:'Assault Bike', muscle:'Cardio', style:'gym', intensity:'all', focus:'cardio', equipment:['Assault Bike'] },
+  { id:'wp_rowing_m', name:'Rowing Machine (Erg)', muscle:'Cardio', style:'gym', intensity:'all', focus:'cardio', equipment:['Rowing Machine'] },
+  { id:'wp_cable_crunch', name:'Cable Crunch', muscle:'Core', style:'gym', intensity:'all', focus:'core', equipment:['Cable Crossover'] },
+  { id:'wp_cable_woodchop', name:'Cable Woodchop', muscle:'Core', style:'gym', intensity:'all', focus:'core', equipment:['Cable Crossover'] },
+  { id:'wp_roman_chair', name:'Roman Chair Back Extension', muscle:'Core', style:'gym', intensity:'all', focus:'pull', equipment:['Roman Chair'] },
 ];
 
 var WP_FOCUS_ROTATION = ['push', 'pull', 'legs', 'full_body', 'core', 'push', 'pull', 'legs', 'full_body', 'cardio'];
@@ -168,6 +204,7 @@ function wpGeneratePlan(prefs) {
         sets: wpSeededPick(repScheme.sets, daySeed + ei * 7),
         reps: wpSeededPick(repScheme.reps, daySeed + ei * 13 + 3),
         rest: wpSeededPick(repScheme.rest, daySeed + ei * 5 + 1),
+        equipment: ex.equipment,
       };
     });
   });

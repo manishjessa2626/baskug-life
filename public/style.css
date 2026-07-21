@@ -3622,6 +3622,7 @@ nav {
 .wp-ex-info { flex: 1; min-width: 0; }
 .wp-ex-name { font-size: 0.82rem; font-weight: 500; color: var(--text-strong); }
 .wp-ex-meta { font-size: 0.7rem; color: var(--text-secondary); margin-top: 2px; }
+.wp-ex-eq { color: var(--primary, #7C5CFC); font-weight: 500; }
 .demo-link { font-size: 0.7rem; color: var(--primary, #7C5CFC); cursor: pointer; text-decoration: underline; }
 
 .wo-presets {

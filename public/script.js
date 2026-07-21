@@ -2448,7 +2448,8 @@ function renderWorkoutPlan() {
     } else {
       html += dayEx.map(function(ex, i) {
         var checked = workoutDone && workoutDone[p.week_start] && workoutDone[p.week_start][d] && workoutDone[p.week_start][d][ex.id] ? 'checked' : '';
-        return '<div class="wp-ex"><label class="wp-ex-check' + (checked ? ' done' : '') + '"><input type="checkbox" data-week="' + p.week_start + '" data-day="' + d + '" data-exid="' + ex.id + '" ' + checked + '><span class="wp-ex-num">' + (i+1) + '</span></label><div class="wp-ex-info"><div class="wp-ex-name">' + escHtml(ex.name) + '</div><div class="wp-ex-meta">' + ex.sets + '×' + ex.reps + ' · ' + ex.muscle + ' · ' + ex.rest + 's rest</div></div></div>';
+        var eq = ex.equipment && ex.equipment.length > 0 ? ' · <span class="wp-ex-eq">' + escHtml(ex.equipment.join(', ')) + '</span>' : '';
+        return '<div class="wp-ex"><label class="wp-ex-check' + (checked ? ' done' : '') + '"><input type="checkbox" data-week="' + p.week_start + '" data-day="' + d + '" data-exid="' + ex.id + '" ' + checked + '><span class="wp-ex-num">' + (i+1) + '</span></label><div class="wp-ex-info"><div class="wp-ex-name">' + escHtml(ex.name) + '</div><div class="wp-ex-meta">' + ex.sets + '×' + ex.reps + ' · ' + ex.muscle + ' · ' + ex.rest + 's rest' + eq + '</div></div></div>';
       }).join('');
     }
     html += '</div></div>';

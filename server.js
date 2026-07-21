@@ -14,7 +14,7 @@ var jwt = require('jsonwebtoken');
 var { auth } = require('./middleware/auth');
 var { loginLimiter, registerLimiter, apiLimiter } = require('./middleware/rateLimit');
 var { createRouter: createAuthRouter } = require('./routes/auth');
-var { generatePlan } = require('./workout/exercises');
+var { generatePlan, getEquipmentLabel } = require('./workout/exercises');
 
 var app = express();
 var server = http.createServer(app);

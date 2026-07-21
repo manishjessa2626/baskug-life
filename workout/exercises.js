@@ -99,6 +99,42 @@ var EXERCISES = [
   { id:'ex_thruster', name:'Dumbbell Thruster', muscle:'Full Body', style:'gym', intensity:'all', focus:'full_body', equipment:['dumbbells'], demo:null },
   { id:'ex_burpee_pushup', name:'Burpee with Push-Up', muscle:'Full Body', style:'bodyweight', intensity:'intermediate', focus:'full_body', equipment:[], demo:null },
   { id:'ex_tabata', name:'Tabata Circuit', muscle:'Full Body', style:'bodyweight', intensity:'all', focus:'cardio', equipment:[], demo:null },
+
+  // ========== GYM MACHINES (Legs) ==========
+  { id:'ex_leg_press_m', name:'Leg Press Machine', muscle:'Legs', style:'gym', intensity:'all', focus:'legs', equipment:['leg_press_machine'], demo:null },
+  { id:'ex_leg_ext', name:'Leg Extension Machine', muscle:'Legs', style:'gym', intensity:'all', focus:'legs', equipment:['leg_extension_machine'], demo:null },
+  { id:'ex_leg_curl', name:'Leg Curl Machine', muscle:'Legs', style:'gym', intensity:'all', focus:'legs', equipment:['leg_curl_machine'], demo:null },
+  { id:'ex_hack_squat', name:'Hack Squat Machine', muscle:'Legs', style:'gym', intensity:'all', focus:'legs', equipment:['hack_squat_machine'], demo:null },
+  { id:'ex_hip_abductor', name:'Hip Abductor Machine', muscle:'Legs', style:'gym', intensity:'all', focus:'legs', equipment:['hip_abductor_machine'], demo:null },
+  { id:'ex_hip_adductor', name:'Hip Adductor Machine', muscle:'Legs', style:'gym', intensity:'all', focus:'legs', equipment:['hip_adductor_machine'], demo:null },
+  { id:'ex_smith_squat', name:'Smith Machine Squat', muscle:'Legs', style:'gym', intensity:'all', focus:'legs', equipment:['smith_machine'], demo:null },
+  { id:'ex_chest_press_m', name:'Chest Press Machine', muscle:'Chest', style:'gym', intensity:'all', focus:'push', equipment:['chest_press_machine'], demo:null },
+  { id:'ex_pec_deck', name:'Pec Deck Machine', muscle:'Chest', style:'gym', intensity:'all', focus:'push', equipment:['pec_deck_machine'], demo:null },
+  { id:'ex_cable_fly', name:'Cable Crossover Fly', muscle:'Chest', style:'gym', intensity:'all', focus:'push', equipment:['cable_crossover'], demo:null },
+  { id:'ex_incline_chest_m', name:'Incline Chest Press Machine', muscle:'Chest', style:'gym', intensity:'all', focus:'push', equipment:['chest_press_machine'], demo:null },
+  { id:'ex_smith_incline', name:'Smith Machine Incline Press', muscle:'Chest', style:'gym', intensity:'intermediate', focus:'push', equipment:['smith_machine','bench'], demo:null },
+  { id:'ex_lat_pulldown_m', name:'Lat Pulldown Machine', muscle:'Back', style:'gym', intensity:'all', focus:'pull', equipment:['lat_pulldown_machine'], demo:null },
+  { id:'ex_seated_row_m', name:'Seated Cable Row Machine', muscle:'Back', style:'gym', intensity:'all', focus:'pull', equipment:['seated_row_machine'], demo:null },
+  { id:'ex_tbar_row', name:'T-Bar Row Machine', muscle:'Back', style:'gym', intensity:'intermediate', focus:'pull', equipment:['tbar_row_machine'], demo:null },
+  { id:'ex_assisted_pullup', name:'Assisted Pull-Up Machine', muscle:'Back', style:'gym', intensity:'all', focus:'pull', equipment:['assisted_pullup_machine'], demo:null },
+  { id:'ex_cable_pullover', name:'Cable Pull-Over', muscle:'Back', style:'gym', intensity:'all', focus:'pull', equipment:['cable_crossover'], demo:null },
+  { id:'ex_cable_face_pull', name:'Cable Face Pull', muscle:'Back', style:'gym', intensity:'all', focus:'pull', equipment:['cable_crossover'], demo:null },
+  { id:'ex_shoulder_press_m', name:'Shoulder Press Machine', muscle:'Shoulders', style:'gym', intensity:'all', focus:'push', equipment:['shoulder_press_machine'], demo:null },
+  { id:'ex_cable_lat_raise', name:'Cable Lateral Raise', muscle:'Shoulders', style:'gym', intensity:'all', focus:'push', equipment:['cable_crossover'], demo:null },
+  { id:'ex_rev_pec_deck', name:'Reverse Pec Deck (Rear Delt)', muscle:'Shoulders', style:'gym', intensity:'all', focus:'pull', equipment:['pec_deck_machine'], demo:null },
+  { id:'ex_smith_ohp', name:'Smith Machine Overhead Press', muscle:'Shoulders', style:'gym', intensity:'intermediate', focus:'push', equipment:['smith_machine'], demo:null },
+  { id:'ex_cable_bicep', name:'Cable Bicep Curl', muscle:'Arms', style:'gym', intensity:'all', focus:'pull', equipment:['cable_crossover'], demo:null },
+  { id:'ex_cable_tri', name:'Cable Tricep Pushdown', muscle:'Arms', style:'gym', intensity:'all', focus:'push', equipment:['cable_crossover'], demo:null },
+  { id:'ex_preacher_m', name:'Preacher Curl Machine', muscle:'Arms', style:'gym', intensity:'all', focus:'pull', equipment:['preacher_curl_machine'], demo:null },
+  { id:'ex_dip_m', name:'Assisted Dip Machine', muscle:'Arms', style:'gym', intensity:'all', focus:'push', equipment:['assisted_dip_machine'], demo:null },
+  { id:'ex_treadmill', name:'Treadmill', muscle:'Cardio', style:'gym', intensity:'all', focus:'cardio', equipment:['treadmill'], demo:null },
+  { id:'ex_elliptical', name:'Elliptical Trainer', muscle:'Cardio', style:'gym', intensity:'all', focus:'cardio', equipment:['elliptical'], demo:null },
+  { id:'ex_stairmaster', name:'StairMaster', muscle:'Cardio', style:'gym', intensity:'all', focus:'cardio', equipment:['stairmaster'], demo:null },
+  { id:'ex_assault_bike', name:'Assault Bike', muscle:'Cardio', style:'gym', intensity:'all', focus:'cardio', equipment:['assault_bike'], demo:null },
+  { id:'ex_rowing_m', name:'Rowing Machine (Erg)', muscle:'Cardio', style:'gym', intensity:'all', focus:'cardio', equipment:['rowing_machine'], demo:null },
+  { id:'ex_cable_crunch', name:'Cable Crunch', muscle:'Core', style:'gym', intensity:'all', focus:'core', equipment:['cable_crossover'], demo:null },
+  { id:'ex_cable_woodchop', name:'Cable Woodchop', muscle:'Core', style:'gym', intensity:'all', focus:'core', equipment:['cable_crossover'], demo:null },
+  { id:'ex_roman_chair', name:'Roman Chair Back Extension', muscle:'Core', style:'gym', intensity:'all', focus:'pull', equipment:['roman_chair'], demo:null },
 ];
 
 // Weekly focus rotation based on ISO week number
@@ -217,6 +253,7 @@ function generatePlan(userPrefs, options) {
     var repScheme = GOAL_REPS[goal] || GOAL_REPS.general;
 
     plan[dayName] = selected.map(function(ex, ei) {
+      var eqLabels = ex.equipment.map(function(eq) { return getEquipmentLabel(eq); });
       return {
         id: ex.id + '_' + idx + '_' + ei,
         name: ex.name,
@@ -224,6 +261,7 @@ function generatePlan(userPrefs, options) {
         sets: seededPick(repScheme.sets, daySeed + ei * 7),
         reps: seededPick(repScheme.reps, daySeed + ei * 13 + 3),
         rest: seededPick(repScheme.rest, daySeed + ei * 5 + 1),
+        equipment: eqLabels,
         demo: ex.demo
       };
     });
@@ -314,4 +352,25 @@ function filterExercises(style, intensity, equipment, primaryFocus, secondaryFoc
   return matches;
 }
 
-module.exports = { generatePlan, EXERCISES, FOCUS_ROTATION, FOCUS_LABEL };
+var EQUIPMENT_LABELS = {
+  barbell: 'Barbell', bench: 'Bench', dumbbells: 'Dumbbells', squat_rack: 'Squat Rack',
+  cable: 'Cable Machine', bands: 'Resistance Bands', pullup_bar: 'Pull-Up Bar',
+  dip_bars: 'Dip Bars', ez_bar: 'EZ Bar', rower: 'Rowing Machine', bike: 'Stationary Bike',
+  rope: 'Jump Rope', kettlebell: 'Kettlebell', leg_press: 'Leg Press Machine',
+  leg_press_machine: 'Leg Press Machine', leg_extension_machine: 'Leg Extension Machine',
+  leg_curl_machine: 'Leg Curl Machine', hack_squat_machine: 'Hack Squat Machine',
+  hip_abductor_machine: 'Hip Abductor Machine', hip_adductor_machine: 'Hip Adductor Machine',
+  smith_machine: 'Smith Machine', chest_press_machine: 'Chest Press Machine',
+  pec_deck_machine: 'Pec Deck Machine', cable_crossover: 'Cable Crossover',
+  lat_pulldown_machine: 'Lat Pulldown Machine', seated_row_machine: 'Seated Row Machine',
+  tbar_row_machine: 'T-Bar Row Machine', assisted_pullup_machine: 'Assisted Pull-Up Machine',
+  shoulder_press_machine: 'Shoulder Press Machine', preacher_curl_machine: 'Preacher Curl Machine',
+  assisted_dip_machine: 'Assisted Dip Machine', treadmill: 'Treadmill',
+  elliptical: 'Elliptical Trainer', stairmaster: 'StairMaster', assault_bike: 'Assault Bike',
+  rowing_machine: 'Rowing Machine', roman_chair: 'Roman Chair', box: 'Box', bench_box: 'Bench'
+};
+
+// Add equipment label helper
+function getEquipmentLabel(eq) { return EQUIPMENT_LABELS[eq] || eq; }
+
+module.exports = { generatePlan, EXERCISES, FOCUS_ROTATION, FOCUS_LABEL, getEquipmentLabel };
