@@ -767,6 +767,10 @@ checkServer();
       <!-- PLAN TAB -->
       <div class="wo-tab-content hidden" data-wotab="plan">
         <div class="container narrow">
+          <div style="display:flex;gap:4px;margin-bottom:8px;">
+            <button class="wp-subtab active" data-wpsub="week">📅 Week</button>
+            <button class="wp-subtab" data-wpsub="month">📆 Month</button>
+          </div>
           <div id="wp-header"></div>
           <div id="wp-customize" class="add-card" style="margin-bottom:1rem;">
             <h4>⚙️ Your Preferences</h4>
@@ -795,8 +799,18 @@ checkServer();
               <div class="wp-day-picker" data-day="sunday" style="flex:1;min-width:90px;"><label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox"><span>☀️ Sun</span></label><select class="wp-day-style" style="width:100%;font-size:0.7rem;margin-top:2px;padding:2px 4px;border:1px solid var(--border-primary);border-radius:4px;background:var(--page-primary);color:var(--text-strong);"><option value="mixed">Mixed</option><option value="gym">🏋️ Gym</option><option value="home" selected>🏠 Home</option></select></div>
             </div>
           </div>
-          <div id="wp-week">
+          <div id="wp-week" class="wp-plan-view">
             <p class="wo-empty">Click <strong>Generate Plan</strong> to create your weekly workout plan.</p>
+          </div>
+          <div id="wp-month" class="wp-plan-view hidden">
+            <div class="wp-month-nav">
+              <button class="btn-sm" id="wp-mprev">←</button>
+              <span id="wp-month-label"></span>
+              <button class="btn-sm" id="wp-mnext">→</button>
+              <button class="btn-sm" id="wp-mtoday">Today</button>
+            </div>
+            <div id="wp-month-grid"></div>
+            <div id="wp-month-detail" class="hidden" style="margin-top:8px;"></div>
           </div>
         </div>
       </div>

@@ -2404,7 +2404,171 @@ try { var wd = localStorage.getItem('baskug_workout_done'); if (wd) workoutDone 
 function switchWoTab(tab) {
   document.querySelectorAll('.dim-tab[data-wotab]').forEach(function(t) { t.classList.toggle('active', t.dataset.wotab === tab); });
   document.querySelectorAll('.wo-tab-content').forEach(function(s) { s.classList.toggle('hidden', s.dataset.wotab !== tab); });
-  if (tab === 'plan' && workoutPlan) renderWorkoutPlan();
+  if (tab === 'plan' && workoutPlan) { renderWorkoutPlan(); renderMonthPlan(); }
+}
+
+// ===== WORKOUT PLAN MONTH VIEW =====
+var wpMonthOffset = 0;
+
+function renderMonthPlan() {
+  var grid = document.getElementById('wp-month-grid');
+  var label = document.getElementById('wp-month-label');
+  var detail = document.getElementById('wp-month-detail');
+  if (!grid) return;
+
+  var now = new Date();
+  var year = now.getFullYear();
+  var month = now.getMonth() + wpMonthOffset;
+  if (month < 0) { month = 11; year--; }
+  if (month > 11) { month = 0; year++; }
+  var monthDate = new Date(year, month, 1);
+
+  var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  label.textContent = monthNames[month] + ' ' + year;
+
+  var firstDay = monthDate.getDay(); // 0=Sun
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  var startCol = firstDay === 0 ? 6 : firstDay - 1; // Mon=0
+
+  // Generate plans for all weeks in this month
+  var weekPlans = {};
+  for (var d = 1; d <= daysInMonth; d++) {
+    var date = new Date(year, month, d);
+    var weekStart = wpGetWeekStart(date);
+    var weekKey = wpFmtDate(weekStart);
+    if (!weekPlans[weekKey]) {
+      // Try to load from existing workoutPlan, or generate on the fly
+      var existing = workoutPlan && workoutPlan.week_start === weekKey ? workoutPlan : null;
+      if (existing) {
+        weekPlans[weekKey] = existing;
+      } else {
+        // Generate a plan for this week using saved preferences if available
+        var prefs = {};
+        if (workoutPlan && workoutPlan.schedule) {
+          var savedPlan = loadSavedPlanForWeek(weekKey);
+          if (savedPlan) {
+            weekPlans[weekKey] = savedPlan;
+          }
+        }
+      }
+    }
+  }
+
+  var html = '<div class="wp-month-grid">';
+  html += '<div class="wp-mg-header"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>';
+  html += '<div class="wp-mg-body">';
+
+  // Empty cells before first day
+  for (var i = 0; i < startCol; i++) {
+    html += '<div class="wp-mg-cell empty"></div>';
+  }
+
+  for (var dayNum = 1; dayNum <= daysInMonth; dayNum++) {
+    var date = new Date(year, month, dayNum);
+    var dateStr = wpFmtDate(date);
+    var weekStart = wpGetWeekStart(date);
+    var weekKey = wpFmtDate(weekStart);
+    var dayOfWeek = DAYS[(date.getDay() + 6) % 7]; // Mon=0
+
+    var plan = weekPlans[weekKey];
+    var dayExs = plan && plan.plan ? plan.plan[dayOfWeek] : null;
+    var count = dayExs ? dayExs.length : 0;
+    var isToday = dateStr === wpFmtDate(new Date());
+    var hasWorkout = count > 0;
+
+    html += '<div class="wp-mg-cell' + (isToday ? ' today' : '') + (hasWorkout ? ' has-wo' : '') + '" data-date="' + dateStr + '" data-week="' + weekKey + '" data-day="' + dayOfWeek + '">';
+    html += '<div class="wp-mg-daynum">' + dayNum + '</div>';
+    if (hasWorkout) {
+      html += '<div class="wp-mg-count">' + count + '</div>';
+    }
+    html += '</div>';
+  }
+
+  html += '</div></div>';
+  grid.innerHTML = html;
+
+  // Click day to show detail
+  grid.querySelectorAll('.wp-mg-cell.has-wo').forEach(function(cell) {
+    cell.addEventListener('click', function() {
+      var dateStr = this.dataset.date;
+      var weekKey = this.dataset.week;
+      var dayOfWeek = this.dataset.day;
+      showMonthDayDetail(dateStr, weekKey, dayOfWeek);
+    });
+  });
+}
+
+function loadSavedPlanForWeek(weekKey) {
+  // Check localStorage for saved plans
+  try {
+    var saved = localStorage.getItem('baskug_workout_plan');
+    if (saved) {
+      var p = JSON.parse(saved);
+      if (p.week_start === weekKey) return p;
+    }
+    // Try generating with current schedule if available
+    var savedSched = localStorage.getItem('baskug_workout_schedule');
+    if (savedSched) {
+      var sched = JSON.parse(savedSched);
+      var prefs = workoutPlan ? workoutPlan.preferences : {};
+      var gen = wpGeneratePlan(prefs, sched);
+      if (gen.week_start === weekKey) return gen;
+    }
+  } catch(e) {}
+  return null;
+}
+
+function showMonthDayDetail(dateStr, weekKey, dayOfWeek) {
+  var detail = document.getElementById('wp-month-detail');
+  // Try to get plan for this week
+  var plan = null;
+  if (workoutPlan && workoutPlan.week_start === weekKey) {
+    plan = workoutPlan;
+  } else {
+    plan = loadSavedPlanForWeek(weekKey);
+  }
+
+  var exs = plan && plan.plan ? plan.plan[dayOfWeek] : [];
+  if (!exs || exs.length === 0) {
+    detail.innerHTML = '<div class="add-card"><h4>' + dateStr + ' — Rest day</h4></div>';
+  } else {
+    var html = '<div class="add-card"><h4>' + dateStr + ' (' + dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1) + ')</h4>';
+    html += exs.map(function(ex, i) {
+      var checked = workoutDone && workoutDone[weekKey] && workoutDone[weekKey][dayOfWeek] && workoutDone[weekKey][dayOfWeek][ex.id] ? 'checked' : '';
+      var eq = ex.equipment && ex.equipment.length > 0 ? ' · <span class="wp-ex-eq">' + escHtml(ex.equipment.join(', ')) + '</span>' : '';
+      return '<div class="wp-ex"><label class="wp-ex-check' + (checked ? ' done' : '') + '"><input type="checkbox" data-week="' + weekKey + '" data-day="' + dayOfWeek + '" data-exid="' + ex.id + '" ' + checked + '><span class="wp-ex-num">' + (i+1) + '</span></label><div class="wp-ex-info"><div class="wp-ex-name">' + escHtml(ex.name) + '</div><div class="wp-ex-meta">' + ex.sets + '×' + ex.reps + ' · ' + ex.muscle + ' · ' + ex.rest + 's rest' + eq + '</div></div></div>';
+    }).join('');
+    html += '</div>';
+    detail.innerHTML = html;
+
+    // Wire checkboxes
+    detail.querySelectorAll('.wp-ex-check input').forEach(function(cb) {
+      cb.addEventListener('change', function() {
+        var w = this.dataset.week;
+        var day = this.dataset.day;
+        var exId = this.dataset.exid;
+        if (!workoutDone) workoutDone = {};
+        if (!workoutDone[w]) workoutDone[w] = {};
+        if (!workoutDone[w][day]) workoutDone[w][day] = {};
+        if (this.checked) { workoutDone[w][day][exId] = true; this.parentElement.classList.add('done'); }
+        else { delete workoutDone[w][day][exId]; this.parentElement.classList.remove('done'); }
+        localStorage.setItem('baskug_workout_done', JSON.stringify(workoutDone));
+      });
+    });
+  }
+  detail.classList.remove('hidden');
+}
+
+function wpMonthNav(dir) {
+  wpMonthOffset += dir;
+  renderMonthPlan();
+  document.getElementById('wp-month-detail').classList.add('hidden');
+}
+
+function wpMonthToday() {
+  wpMonthOffset = 0;
+  renderMonthPlan();
+  document.getElementById('wp-month-detail').classList.add('hidden');
 }
 
 function loadWorkoutPlan() {
@@ -3126,6 +3290,19 @@ document.addEventListener('DOMContentLoaded', function() {
     t.addEventListener('click', function() { switchWoTab(this.dataset.wotab); });
   });
   safeListen('wp-gen-btn', 'click', generateWorkoutPlan);
+  // Plan subtabs (week/month)
+  document.querySelectorAll('.wp-subtab').forEach(function(t) {
+    t.addEventListener('click', function() {
+      document.querySelectorAll('.wp-subtab').forEach(function(st) { st.classList.remove('active'); });
+      this.classList.add('active');
+      document.querySelectorAll('.wp-plan-view').forEach(function(v) { v.classList.add('hidden'); });
+      document.getElementById('wp-' + this.dataset.wpsub).classList.remove('hidden');
+      if (this.dataset.wpsub === 'month' && workoutPlan) renderMonthPlan();
+    });
+  });
+  safeListen('wp-mprev', 'click', function() { wpMonthNav(-1); });
+  safeListen('wp-mnext', 'click', function() { wpMonthNav(1); });
+  safeListen('wp-mtoday', 'click', wpMonthToday);
   safeListen('add-routine-btn', 'click', addRoutine);
   safeListen('add-hobby-btn', 'click', addHobby);
 

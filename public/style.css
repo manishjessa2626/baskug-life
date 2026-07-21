@@ -3622,6 +3622,25 @@ nav {
 .wp-ex-info { flex: 1; min-width: 0; }
 .wp-ex-name { font-size: 0.82rem; font-weight: 500; color: var(--text-strong); }
 .wp-ex-meta { font-size: 0.7rem; color: var(--text-secondary); margin-top: 2px; }
+.wp-subtab { flex: 1; padding: 6px; border: 1px solid var(--border-primary); background: var(--page-secondary); color: var(--text-secondary); font-family: inherit; font-size: 0.78rem; cursor: pointer; border-radius: 8px; transition: all 0.15s; text-align:center; }
+.wp-subtab.active { background: var(--text-strong); color: var(--page-primary); border-color: var(--text-strong); font-weight: 600; }
+.wp-subtab:hover:not(.active) { background: var(--border-primary); }
+
+/* Month calendar */
+.wp-month-nav { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.wp-month-nav span { flex: 1; text-align: center; font-weight: 600; font-size: 0.85rem; }
+.wp-month-grid { border: 1px solid var(--border-primary); border-radius: 12px; overflow: hidden; }
+.wp-mg-header { display: grid; grid-template-columns: repeat(7,1fr); background: var(--page-secondary); }
+.wp-mg-header span { padding: 6px; text-align: center; font-size: 0.7rem; font-weight: 600; color: var(--text-secondary); }
+.wp-mg-body { display: grid; grid-template-columns: repeat(7,1fr); }
+.wp-mg-cell { min-height: 48px; padding: 4px; border-right: 1px solid var(--border-primary); border-bottom: 1px solid var(--border-primary); cursor: default; position: relative; }
+.wp-mg-cell:nth-child(7n) { border-right: none; }
+.wp-mg-cell.empty { background: var(--page-secondary); }
+.wp-mg-cell.today .wp-mg-daynum { background: var(--text-strong); color: var(--page-primary); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+.wp-mg-cell.has-wo { cursor: pointer; }
+.wp-mg-cell.has-wo:hover { background: rgba(128,128,128,0.05); }
+.wp-mg-daynum { font-size: 0.75rem; font-weight: 500; color: var(--text-strong); }
+.wp-mg-count { font-size: 0.6rem; color: var(--primary, #7C5CFC); font-weight: 700; margin-top: 2px; background: rgba(124,92,252,0.1); display: inline-block; padding: 0 4px; border-radius: 4px; }
 .wp-day-picker { background: var(--page-secondary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 6px 8px; }
 .wp-day-picker label { font-size: 0.75rem; font-weight: 500; color: var(--text-strong); }
 .wp-day-picker input[type="checkbox"] { accent-color: var(--primary, #7C5CFC); }
