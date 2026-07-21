@@ -3057,6 +3057,51 @@ function showAuthError(msg) {
   el.style.display = msg ? 'block' : 'none';
 }
 
+function firebaseEmailSignIn() {
+  showAuthError('');
+  var email = document.getElementById('auth-email').value.trim();
+  var pw = document.getElementById('auth-password').value.trim();
+  if (!email) { showAuthError('Enter your email address.'); return; }
+  if (!pw) { showAuthError('Enter your password.'); return; }
+
+  var btn = document.getElementById('btn-auth-login');
+  btn.disabled = true; btn.textContent = '⏳ Signing in...';
+
+  firebase.auth().signInWithEmailAndPassword(email, pw)
+    .then(function() {
+      hideOverlay('view-auth');
+      btn.disabled = false; btn.textContent = 'Sign In';
+    })
+    .catch(function(e) {
+      showAuthError(firebaseAuthErrorMessage(e));
+      btn.disabled = false; btn.textContent = 'Sign In';
+    });
+}
+
+function firebaseEmailSignUp() {
+  showAuthError('');
+  var email = document.getElementById('auth-email').value.trim();
+  var pw = document.getElementById('auth-password').value.trim();
+  if (!email) { showAuthError('Enter your email address.'); return; }
+  if (!pw) { showAuthError('Create a password (6+ characters).'); return; }
+  if (pw.length < 6) { showAuthError('Password must be at least 6 characters.'); return; }
+
+  var btn = document.getElementById('btn-auth-signup');
+  btn.disabled = true; btn.textContent = '⏳ Creating account...';
+
+  firebase.auth().createUserWithEmailAndPassword(email, pw)
+    .then(function(result) {
+      // Send verification email
+      result.user.sendEmailVerification().catch(function(e) { console.warn('Verify email failed:', e); });
+      hideOverlay('view-auth');
+      btn.disabled = false; btn.textContent = 'Sign Up';
+    })
+    .catch(function(e) {
+      showAuthError(firebaseAuthErrorMessage(e));
+      btn.disabled = false; btn.textContent = 'Sign Up';
+    });
+}
+
 function firebasePhoneSignIn() {
   var codeEl = document.getElementById('auth-phone-code');
   var phoneEl = document.getElementById('auth-phone-input');
@@ -3126,7 +3171,10 @@ function firebaseAuthErrorMessage(e) {
     'auth/too-many-requests-phone': 'Too many SMS requests. Please try again later.',
     'auth/quota-exceeded': 'SMS quota exceeded. Please try again later.',
     'auth/code-expired': 'Verification code expired. Please request a new one.',
-    'auth/invalid-verification-code': 'Invalid verification code. Please check and try again.'
+    'auth/invalid-verification-code': 'Invalid verification code. Please check and try again.',
+    'auth/missing-email': 'Please enter your email address.',
+    'auth/missing-password': 'Please enter your password.',
+    'auth/operation-not-allowed': 'Email/password sign-in is not enabled. Please use Google sign-in.'
   };
   return map[code] || e.message || 'Authentication failed.';
 }
@@ -3158,6 +3206,16 @@ function onFirebaseAuth(firebaseUser) {
   if (firebaseUser) {
     firebaseUserCache = firebaseUser;
     user.email = firebaseUser.email;
+
+    // For email/password users, require email verification
+    var isEmailUser = firebaseUser.providerData && firebaseUser.providerData.some(function(p) { return p.providerId === 'password'; });
+    if (isEmailUser && !firebaseUser.emailVerified) {
+      showOverlay('view-verify');
+      document.getElementById('verify-email').textContent = firebaseUser.email || '';
+      hideOverlay('view-auth');
+      firebaseUserResolve();
+      return;
+    }
     firebaseUser.getIdToken().then(function(token) {
       authToken = token;
       localStorage.setItem('baskug_token', token);
@@ -3289,6 +3347,49 @@ document.addEventListener('DOMContentLoaded', function() {
     showAuthStep('phone');
     showAuthError('');
     authConfirmResult = null;
+  });
+
+  // Email/password sign-in
+  safeListen('btn-auth-login', 'click', firebaseEmailSignIn);
+  safeListen('btn-auth-signup', 'click', firebaseEmailSignUp);
+
+  // Enter key on password field triggers sign-in
+  safeListen('auth-password', 'keydown', function(e) {
+    if (e.key === 'Enter') firebaseEmailSignIn();
+  });
+  safeListen('auth-email', 'keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('auth-password').focus();
+  });
+
+  // Email verification
+  safeListen('btn-verify-resend', 'click', function() {
+    var user = firebase.auth().currentUser;
+    if (user) {
+      user.sendEmailVerification().then(function() {
+        document.getElementById('verify-message').textContent = '✅ Verification email resent! Check your inbox.';
+      }).catch(function(e) {
+        document.getElementById('verify-message').textContent = '❌ Failed to send: ' + (e.message || 'try again');
+      });
+    }
+  });
+  safeListen('btn-verify-check', 'click', function() {
+    var user = firebase.auth().currentUser;
+    if (user) {
+      user.reload().then(function() {
+        if (user.emailVerified) {
+          hideOverlay('view-verify');
+          onFirebaseAuth(user);
+        } else {
+          document.getElementById('verify-message').textContent = '⚠️ Email not yet verified. Check your inbox and click the link.';
+        }
+      }).catch(function() {
+        document.getElementById('verify-message').textContent = '⚠️ Could not check verification status. Try again.';
+      });
+    }
+  });
+  safeListen('btn-verify-logout', 'click', function() {
+    firebase.auth().signOut().catch(function() {});
+    hideOverlay('view-verify');
   });
 
   // Auth skip (continue without account)

@@ -87,6 +87,17 @@
         <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
         Continue with Phone
       </button>
+
+      <div style="margin:12px 0;text-align:center;font-size:0.78rem;color:var(--muted);">or sign in with email</div>
+
+      <div id="auth-email-section">
+        <input type="email" id="auth-email" placeholder="Email address" style="width:100%;margin-bottom:6px;">
+        <input type="password" id="auth-password" placeholder="Password" style="width:100%;margin-bottom:8px;">
+        <div style="display:flex;gap:6px;">
+          <button class="btn" id="btn-auth-login" style="flex:1;">Sign In</button>
+          <button class="btn" id="btn-auth-signup" style="flex:1;">Sign Up</button>
+        </div>
+      </div>
     </div>
 
     <!-- Step 1: Enter phone number -->
@@ -137,6 +148,18 @@
     <div style="text-align:center;margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">
       <button id="auth-skip" style="background:none;border:none;color:var(--muted);font-size:0.82rem;cursor:pointer;text-decoration:underline;">Continue without account →</button>
     </div>
+  </div>
+</div>
+
+<!-- EMAIL VERIFICATION OVERLAY -->
+<div id="view-verify" class="overlay">
+  <div class="overlay-card" style="max-width:360px;text-align:center;">
+    <div style="font-size:2.5rem;margin-bottom:8px;">📧</div>
+    <h3 style="margin-bottom:8px;">Verify your email</h3>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:12px;" id="verify-message">We sent a verification email to <strong id="verify-email"></strong>. Please check your inbox and click the link.</p>
+    <button class="btn btn-full" id="btn-verify-resend" style="margin-bottom:6px;">Resend Verification Email</button>
+    <button class="btn btn-full" id="btn-verify-check" style="margin-bottom:6px;">I've Verified — Continue</button>
+    <button class="btn-link" id="btn-verify-logout" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.82rem;text-decoration:underline;display:block;width:100%;text-align:center;">Use a different email →</button>
   </div>
 </div>
 
