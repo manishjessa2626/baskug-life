@@ -14,6 +14,7 @@ var jwt = require('jsonwebtoken');
 var { auth } = require('./middleware/auth');
 var { loginLimiter, registerLimiter, apiLimiter } = require('./middleware/rateLimit');
 var { createRouter: createAuthRouter } = require('./routes/auth');
+var { generatePlan } = require('./workout/exercises');
 
 var app = express();
 var server = http.createServer(app);
@@ -158,6 +159,59 @@ app.delete('/api/data/:key', auth, function(req, res) {
   } catch (e) {
     console.error('Data delete error:', e.message);
     res.status(500).json({ error: 'Failed to delete data' });
+  }
+});
+
+// ============ WORKOUT PLAN ============
+app.get('/api/workout/plan', auth, function(req, res) {
+  try {
+    var val = getUserData(req.userId, 'baskug_workout_plan');
+    if (!val) return res.json(null);
+    res.json(val);
+  } catch (e) {
+    console.error('Workout plan get error:', e.message);
+    res.status(500).json({ error: 'Failed to fetch workout plan' });
+  }
+});
+
+app.post('/api/workout/plan/generate', auth, function(req, res) {
+  try {
+    var prefs = req.body.preferences || {};
+    // Use user profile as fallback
+    var userRow = db.prepare('SELECT age, gender, activity_level, weight FROM users WHERE id = ?').get(req.userId);
+    var intensity = prefs.intensity || 'intermediate';
+    if (userRow) {
+      if (userRow.activity_level === 'sedentary' && !prefs.intensity) intensity = 'beginner';
+      if (userRow.activity_level === 'very_active' && !prefs.intensity) intensity = 'advanced';
+    }
+    var planPrefs = {
+      goal: prefs.goal || 'general',
+      style: prefs.style || 'mixed',
+      intensity: intensity,
+      days_per_week: parseInt(prefs.days_per_week) || 5,
+      equipment: prefs.equipment || []
+    };
+    // Apply user-specific preferences to make plan unique
+    var userSeed = req.userId * 7;
+    var plan = generatePlan(planPrefs, { userSeed: userSeed });
+    setUserData(req.userId, 'baskug_workout_plan', plan);
+    io.to('user:' + req.userId).emit('data-update', { key: 'baskug_workout_plan', value: plan });
+    res.json(plan);
+  } catch (e) {
+    console.error('Workout plan generate error:', e.message, e.stack);
+    res.status(500).json({ error: 'Failed to generate workout plan' });
+  }
+});
+
+app.put('/api/workout/plan/preferences', auth, function(req, res) {
+  try {
+    var existing = getUserData(req.userId, 'baskug_workout_plan') || {};
+    existing.preferences = req.body;
+    setUserData(req.userId, 'baskug_workout_plan', existing);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('Workout prefs error:', e.message);
+    res.status(500).json({ error: 'Failed to save preferences' });
   }
 });
 

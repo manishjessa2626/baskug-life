@@ -262,7 +262,7 @@ function openDimension(name) {
   if (name === 'balance') renderBalance();
   if (name === 'reflect') loadReflection();
   if (name === 'meals') renderMeals();
-  if (name === 'workout') { renderWorkouts(); renderPilatesPresets(); }
+  if (name === 'workout') { renderWorkouts(); renderPilatesPresets(); loadWorkoutPlan().then(function() { renderWorkoutPlan(); switchWoTab('log'); }); }
   if (name === 'routines') renderRoutines();
   if (name === 'hobbies') renderHobbies();
   if (name === 'remedies') renderRemedies();
@@ -2395,6 +2395,172 @@ function closeVideoPlayer() {
   document.removeEventListener('keydown', videoEscHandler);
 }
 
+// ===== WORKOUT PLAN =====
+var workoutPlan = null;
+var workoutDone = {};
+
+try { var wd = localStorage.getItem('baskug_workout_done'); if (wd) workoutDone = JSON.parse(wd); } catch(e) {}
+
+function switchWoTab(tab) {
+  document.querySelectorAll('.dim-tab[data-wotab]').forEach(function(t) { t.classList.toggle('active', t.dataset.wotab === tab); });
+  document.querySelectorAll('.wo-tab-content').forEach(function(s) { s.classList.toggle('hidden', s.dataset.wotab !== tab); });
+  if (tab === 'plan' && workoutPlan) renderWorkoutPlan();
+}
+
+function loadWorkoutPlan() {
+  if (authToken) {
+    return fetch('/api/workout/plan', { headers: { 'Authorization': 'Bearer ' + authToken } })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d && d.plan) { workoutPlan = d; return d; }
+        return null;
+      })
+      .catch(function() {
+        try { var lp = localStorage.getItem('baskug_workout_plan'); if (lp) workoutPlan = JSON.parse(lp); } catch(e) {}
+        return null;
+      });
+  }
+  try { var d = localStorage.getItem('baskug_workout_plan'); if (d) workoutPlan = JSON.parse(d); } catch(e) {}
+  return Promise.resolve(workoutPlan);
+}
+
+function renderWorkoutPlan() {
+  var container = document.getElementById('wp-week');
+  var header = document.getElementById('wp-header');
+  if (!workoutPlan || !workoutPlan.plan) {
+    container.innerHTML = '<p class="wo-empty">Click <strong>Generate Plan</strong> to create your weekly workout plan.</p>';
+    if (header) header.innerHTML = '';
+    return;
+  }
+
+  var p = workoutPlan;
+  var weekLabel = p.week_start ? 'Week of ' + fmtDateShort(p.week_start) + ' — ' + p.focus_label : 'This Week\'s Plan';
+  header.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;"><div><strong>' + weekLabel + '</strong></div><button class="btn-sm" id="wp-regenerate">🔄 Regenerate</button></div>';
+
+  var html = '';
+  DAYS.forEach(function(d) {
+    var dayEx = p.plan[d] || [];
+    var icon = { monday:'🌙', tuesday:'🔥', wednesday:'🌊', thursday:'🌿', friday:'🎉', saturday:'🌟', sunday:'☀️' };
+    html += '<div class="wp-day"><div class="wp-day-head" data-day="' + d + '"><span>' + icon[d] + ' ' + DAY_LABEL[d] + '</span><span class="wp-day-count">' + dayEx.length + ' exercises</span><span class="wp-day-toggle">▼</span></div>';
+    html += '<div class="wp-day-body">';
+    if (dayEx.length === 0) {
+      html += '<p class="wo-empty" style="padding:0.5rem 0;">Rest day</p>';
+    } else {
+      html += dayEx.map(function(ex, i) {
+        var checked = workoutDone && workoutDone[p.week_start] && workoutDone[p.week_start][d] && workoutDone[p.week_start][d][ex.id] ? 'checked' : '';
+        return '<div class="wp-ex"><label class="wp-ex-check' + (checked ? ' done' : '') + '"><input type="checkbox" data-week="' + p.week_start + '" data-day="' + d + '" data-exid="' + ex.id + '" ' + checked + '><span class="wp-ex-num">' + (i+1) + '</span></label><div class="wp-ex-info"><div class="wp-ex-name">' + escHtml(ex.name) + '</div><div class="wp-ex-meta">' + ex.sets + '×' + ex.reps + ' · ' + ex.muscle + ' · ' + ex.rest + 's rest</div></div></div>';
+      }).join('');
+    }
+    html += '</div></div>';
+  });
+
+  container.innerHTML = html;
+
+  // Day toggle
+  container.querySelectorAll('.wp-day-head').forEach(function(head) {
+    head.addEventListener('click', function() {
+      var body = this.nextElementSibling;
+      body.classList.toggle('open');
+      this.querySelector('.wp-day-toggle').textContent = body.classList.contains('open') ? '▲' : '▼';
+    });
+    // Open by default
+    head.nextElementSibling.classList.add('open');
+    head.querySelector('.wp-day-toggle').textContent = '▲';
+  });
+
+  // Checkbox toggle
+  container.querySelectorAll('.wp-ex-check input').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+      var week = this.dataset.week;
+      var day = this.dataset.day;
+      var exId = this.dataset.exid;
+      if (!workoutDone) workoutDone = {};
+      if (!workoutDone[week]) workoutDone[week] = {};
+      if (!workoutDone[week][day]) workoutDone[week][day] = {};
+      if (this.checked) {
+        workoutDone[week][day][exId] = true;
+        this.parentElement.classList.add('done');
+      } else {
+        delete workoutDone[week][day][exId];
+        this.parentElement.classList.remove('done');
+      }
+      localStorage.setItem('baskug_workout_done', JSON.stringify(workoutDone));
+      if (authToken) {
+        apiPut('baskug_workout_done', workoutDone);
+      }
+      updateWorkoutPlanProgress();
+    });
+  });
+
+  // Regenerate
+  var regenBtn = document.getElementById('wp-regenerate');
+  if (regenBtn) regenBtn.addEventListener('click', generateWorkoutPlan);
+
+  updateWorkoutPlanProgress();
+}
+
+function updateWorkoutPlanProgress() {
+  if (!workoutPlan || !workoutPlan.plan) return;
+  var week = workoutPlan.week_start;
+  var total = 0, done = 0;
+  DAYS.forEach(function(d) {
+    var exs = workoutPlan.plan[d] || [];
+    exs.forEach(function(ex) {
+      total++;
+      if (workoutDone && workoutDone[week] && workoutDone[week][d] && workoutDone[week][d][ex.id]) done++;
+    });
+  });
+  var pct = total > 0 ? Math.round(done / total * 100) : 0;
+  var el = document.getElementById('wp-progress');
+  if (!el) {
+    var header = document.getElementById('wp-header');
+    if (header && !document.getElementById('wp-progress')) {
+      var prog = document.createElement('div');
+      prog.id = 'wp-progress';
+      prog.style.cssText = 'margin-bottom:0.75rem;';
+      header.appendChild(prog);
+      el = prog;
+    }
+  }
+  if (el) {
+    el.innerHTML = '<div style="display:flex;align-items:center;gap:0.5rem;"><div style="flex:1;height:6px;background:var(--border-primary);border-radius:3px;"><div style="width:' + pct + '%;height:100%;background:var(--primary, #7C5CFC);border-radius:3px;transition:width 0.3s;"></div></div><span class="type-mono-01-caps" style="font-size:12px;">' + done + '/' + total + ' (' + pct + '%)</span></div>';
+  }
+}
+
+function generateWorkoutPlan() {
+  if (!authToken) { alert('Please log in to generate a workout plan.'); return; }
+  var prefs = {
+    goal: document.getElementById('wp-goal').value,
+    style: document.getElementById('wp-style').value,
+    intensity: document.getElementById('wp-intensity').value,
+    days_per_week: parseInt(document.getElementById('wp-days').value)
+  };
+  var genBtn = document.getElementById('wp-gen-btn');
+  if (genBtn) { genBtn.textContent = 'Generating...'; genBtn.disabled = true; }
+  fetch('/api/workout/plan/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+    body: JSON.stringify({ preferences: prefs })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(plan) {
+    if (plan && plan.plan) {
+      workoutPlan = plan;
+      localStorage.setItem('baskug_workout_plan', JSON.stringify(plan));
+      renderWorkoutPlan();
+      renderDashboard();
+    } else if (plan.error) {
+      alert('Error: ' + plan.error);
+    }
+  })
+  .catch(function(err) {
+    alert('Failed to generate plan: ' + err.message);
+  })
+  .finally(function() {
+    if (genBtn) { genBtn.textContent = 'Generate Plan'; genBtn.disabled = false; }
+  });
+}
+
 // ===== ROUTINES =====
 var routineData = [];
 var routineDone = {};
@@ -2908,6 +3074,11 @@ document.addEventListener('DOMContentLoaded', function() {
   if (mpNext) mpNext.addEventListener('click', function() { mpWeekOffset++; renderMealPlan(); });
   if (mpToday) mpToday.addEventListener('click', function() { mpWeekOffset = 0; renderMealPlan(); });
   safeListen('add-wo-btn', 'click', addWorkout);
+  // Workout tabs
+  document.querySelectorAll('.dim-tab[data-wotab]').forEach(function(t) {
+    t.addEventListener('click', function() { switchWoTab(this.dataset.wotab); });
+  });
+  safeListen('wp-gen-btn', 'click', generateWorkoutPlan);
   safeListen('add-routine-btn', 'click', addRoutine);
   safeListen('add-hobby-btn', 'click', addHobby);
 

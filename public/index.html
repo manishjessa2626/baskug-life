@@ -724,36 +724,83 @@ checkServer();
       <h2>💪 Workout</h2>
       <div></div>
     </div>
+    <div class="dim-tabs">
+      <button class="dim-tab active" data-wotab="log">Log</button>
+      <button class="dim-tab" data-wotab="plan">Plan</button>
+    </div>
     <div class="dim-body">
-      <div class="container narrow">
-        <div class="date-nav">
-          <button class="date-btn" data-move="-1" data-target="workout">←</button>
-          <span class="date-label" id="workout-date-label"></span>
-          <button class="date-btn" data-move="1" data-target="workout">→</button>
-          <button class="date-btn date-today" data-target="workout">Today</button>
+      <!-- LOG TAB -->
+      <div class="wo-tab-content" data-wotab="log">
+        <div class="container narrow">
+          <div class="date-nav">
+            <button class="date-btn" data-move="-1" data-target="workout">←</button>
+            <span class="date-label" id="workout-date-label"></span>
+            <button class="date-btn" data-move="1" data-target="workout">→</button>
+            <button class="date-btn date-today" data-target="workout">Today</button>
+          </div>
+          <div id="workout-summary" class="feature-stats"></div>
+          <div id="workout-list"></div>
+          <div class="add-card">
+            <h4>➕ Add Workout</h4>
+            <div class="add-row">
+              <select id="wo-type">
+                <option value="cardio">🏃 Cardio</option>
+                <option value="strength">🏋️ Strength</option>
+                <option value="pilates">🧘 Pilates</option>
+                <option value="yoga">🧘 Yoga</option>
+                <option value="walking">🚶 Walking</option>
+                <option value="sports">⚽ Sports</option>
+                <option value="other">🎯 Other</option>
+              </select>
+              <input type="text" id="wo-name" placeholder="Activity" style="flex:1;min-width:80px;">
+              <input type="number" id="wo-duration" placeholder="min" style="width:55px;">
+              <select id="wo-intensity" style="width:85px;">
+                <option value="light">Light</option>
+                <option value="moderate" selected>Moderate</option>
+                <option value="intense">Intense</option>
+              </select>
+              <button class="btn-sm" id="add-wo-btn">Add</button>
+            </div>
+          </div>
         </div>
-        <div id="workout-summary" class="feature-stats"></div>
-        <div id="workout-list"></div>
-        <div class="add-card">
-          <h4>➕ Add Workout</h4>
-          <div class="add-row">
-            <select id="wo-type">
-              <option value="cardio">🏃 Cardio</option>
-              <option value="strength">🏋️ Strength</option>
-              <option value="pilates">🧘 Pilates</option>
-              <option value="yoga">🧘 Yoga</option>
-              <option value="walking">🚶 Walking</option>
-              <option value="sports">⚽ Sports</option>
-              <option value="other">🎯 Other</option>
-            </select>
-            <input type="text" id="wo-name" placeholder="Activity" style="flex:1;min-width:80px;">
-            <input type="number" id="wo-duration" placeholder="min" style="width:55px;">
-            <select id="wo-intensity" style="width:85px;">
-              <option value="light">Light</option>
-              <option value="moderate" selected>Moderate</option>
-              <option value="intense">Intense</option>
-            </select>
-            <button class="btn-sm" id="add-wo-btn">Add</button>
+      </div>
+      <!-- PLAN TAB -->
+      <div class="wo-tab-content hidden" data-wotab="plan">
+        <div class="container narrow">
+          <div id="wp-header"></div>
+          <div id="wp-customize" class="add-card" style="margin-bottom:1rem;">
+            <h4>⚙️ Your Preferences</h4>
+            <div class="add-row" style="flex-wrap:wrap;gap:0.5rem;">
+              <select id="wp-goal" style="flex:1;min-width:90px;">
+                <option value="general">🎯 General Fitness</option>
+                <option value="strength">💪 Strength</option>
+                <option value="hypertrophy">🏋️ Muscle Growth</option>
+                <option value="endurance">🏃 Endurance</option>
+              </select>
+              <select id="wp-style" style="width:100px;">
+                <option value="mixed">🔄 Mixed</option>
+                <option value="gym">🏋️ Gym</option>
+                <option value="bodyweight">🤸 Bodyweight</option>
+                <option value="pilates">🧘 Pilates</option>
+                <option value="yoga">🧘 Yoga</option>
+              </select>
+              <select id="wp-intensity" style="width:110px;">
+                <option value="beginner">🌱 Beginner</option>
+                <option value="intermediate" selected>🔥 Intermediate</option>
+                <option value="advanced">💥 Advanced</option>
+              </select>
+              <select id="wp-days" style="width:80px;">
+                <option value="3">3 days</option>
+                <option value="4">4 days</option>
+                <option value="5" selected>5 days</option>
+                <option value="6">6 days</option>
+                <option value="7">7 days</option>
+              </select>
+              <button class="btn-sm" id="wp-gen-btn">Generate Plan</button>
+            </div>
+          </div>
+          <div id="wp-week">
+            <p class="wo-empty">Click <strong>Generate Plan</strong> to create your weekly workout plan.</p>
           </div>
         </div>
       </div>
@@ -936,6 +983,11 @@ if ('serviceWorker' in navigator) {
           fetch('/api/data/baskug_hobbies', { headers: { 'Authorization': 'Bearer ' + window.authToken } })
             .then(function(r) { return r.json(); })
             .then(function(d) { if (d) { window.hobbyData = d; if (window.renderHobbies) window.renderHobbies(); } });
+        }
+        if (msg.key === 'baskug_workout_plan' && window.workoutPlan) {
+          fetch('/api/workout/plan', { headers: { 'Authorization': 'Bearer ' + window.authToken } })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { if (d && d.plan) { window.workoutPlan = d; if (window.renderWorkoutPlan) window.renderWorkoutPlan(); if (window.renderDashboard) window.renderDashboard(); } });
         }
       });
       socket.on('data-delete', function(msg) {
