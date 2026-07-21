@@ -207,49 +207,59 @@ function generatePlan(userPrefs, options) {
   // User preferences with defaults
   var prefs = userPrefs || {};
   var goal = prefs.goal || 'general';
-  var style = prefs.style || 'mixed';
-  var intensity = prefs.intensity || 'intermediate';
-  var daysPerWeek = Math.min(7, Math.max(1, parseInt(prefs.days_per_week)) || 5);
-  var equipment = prefs.equipment || [];
+  var globalIntensity = prefs.intensity || 'intermediate';
+
+  // Per-day schedule (optional — if provided, overrides simple days_per_week)
+  var schedule = options.schedule || null;
 
   // Determine focus for this week
   var focusIdx = (isoWeek - 1) % FOCUS_ROTATION.length;
   var primaryFocus = FOCUS_ROTATION[focusIdx];
-  var secondaryFocus = FOCUS_ROTATION[(focusIdx + 1) % FOCUS_ROTATION.length];
-
-  // Decide day split based on goal and days
-  var dayMap = assignDays(daysPerWeek, primaryFocus, secondaryFocus, seed);
-
-  // Filter exercises
-  var available = filterExercises(style, intensity, equipment, primaryFocus, secondaryFocus);
 
   // Build plan
   var plan = {};
   var DAY_NAMES = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+  var homeFocuses = ['core', 'full_body', 'push', 'pull', 'legs'];
 
-  dayMap.forEach(function(assign, idx) {
-    var dayName = DAY_NAMES[idx];
-    if (!assign) { plan[dayName] = []; return; }
-
-    var focus = assign.focus;
+  DAY_NAMES.forEach(function(dayName, idx) {
     var daySeed = seed + idx * 100;
 
-    var dayExercises = available.filter(function(ex) {
-      return ex.focus === focus || ex.focus === 'full_body';
+    // Determine day config
+    var dayConfig;
+    if (schedule && schedule[dayName]) {
+      dayConfig = schedule[dayName];
+    } else if (options.defaultActiveDays) {
+      dayConfig = options.defaultActiveDays.indexOf(dayName) >= 0
+        ? { active: true, style: prefs.style || 'mixed' }
+        : { active: false, style: 'mixed' };
+    } else {
+      dayConfig = { active: true, style: prefs.style || 'mixed' };
+    }
+
+    if (!dayConfig.active) { plan[dayName] = []; return; }
+
+    var dayStyle = dayConfig.style || 'mixed';
+    var dayIntensity = dayConfig.intensity || globalIntensity;
+    var dayFocus = dayConfig.focus || homeFocuses[(focusIdx + idx) % homeFocuses.length];
+
+    // Filter exercises for this day's style
+    var dayExercises = filterExercises(dayStyle, dayIntensity, prefs.equipment || []).filter(function(ex) {
+      return ex.focus === dayFocus || ex.focus === 'full_body';
     });
 
     if (dayExercises.length < 3) {
-      dayExercises = available.filter(function(ex) {
-        return ex.focus === focus || ex.focus === 'full_body' || ex.focus === 'core';
+      dayExercises = filterExercises(dayStyle, dayIntensity, prefs.equipment || []).filter(function(ex) {
+        return ex.focus === dayFocus || ex.focus === 'full_body' || ex.focus === 'core';
       });
     }
 
-    dayExercises = seededShuffle(dayExercises, daySeed);
+    if (dayExercises.length < 3) {
+      dayExercises = filterExercises('mixed', dayIntensity, []);
+    }
 
-    // Select 4-6 exercises per day
+    dayExercises = seededShuffle(dayExercises, daySeed);
     var count = Math.min(6, Math.max(3, dayExercises.length));
     var selected = dayExercises.slice(0, count);
-
     var repScheme = GOAL_REPS[goal] || GOAL_REPS.general;
 
     plan[dayName] = selected.map(function(ex, ei) {
@@ -275,7 +285,8 @@ function generatePlan(userPrefs, options) {
     focus_label: FOCUS_LABEL[primaryFocus],
     generated_at: new Date().toISOString(),
     plan: plan,
-    preferences: prefs
+    preferences: prefs,
+    schedule: schedule
   };
 }
 
@@ -315,7 +326,10 @@ function assignDays(days, primaryFocus, secondaryFocus, seed) {
   return map;
 }
 
-function filterExercises(style, intensity, equipment, primaryFocus, secondaryFocus) {
+function filterExercises(style, intensity, equipment) {
+  equipment = equipment || [];
+  var HOME_EQUIP = ['dumbbells','bands','rope','bench','box','kettlebell'];
+
   var matches = EXERCISES.filter(function(ex) {
     // Style filter
     if (style === 'gym' && ex.style !== 'gym') return false;
@@ -323,14 +337,24 @@ function filterExercises(style, intensity, equipment, primaryFocus, secondaryFoc
     if (style === 'pilates' && ex.style !== 'pilates') return false;
     if (style === 'yoga' && ex.style !== 'yoga') return false;
 
+    // Home style: bodyweight, pilates, yoga, or gym exercises with home-friendly equipment
+    if (style === 'home') {
+      var homeOk = ex.style === 'bodyweight' || ex.style === 'pilates' || ex.style === 'yoga';
+      if (!homeOk && ex.style === 'gym') {
+        homeOk = ex.equipment.length === 0 || ex.equipment.every(function(eq) {
+          return HOME_EQUIP.indexOf(eq) >= 0;
+        });
+      }
+      if (!homeOk) return false;
+    }
+
     // Intensity filter
     if (intensity === 'beginner' && ex.intensity === 'advanced') return false;
     if (intensity === 'intermediate' && ex.intensity === 'advanced') return false;
 
-    // Equipment filter
-    if (ex.equipment.length > 0 && style === 'gym') {
-      // For gym style, check if user has the equipment
-      if (equipment.length > 0) {
+    // Equipment filter for gym style
+    if (style === 'gym' && equipment.length > 0) {
+      if (ex.equipment.length > 0) {
         var hasAll = ex.equipment.every(function(eq) {
           return equipment.indexOf(eq) >= 0;
         });
@@ -341,8 +365,7 @@ function filterExercises(style, intensity, equipment, primaryFocus, secondaryFoc
     return true;
   });
 
-  if (matches.length < 10) {
-    // Fallback: include everything matching intensity and primary focus
+  if (matches.length < 8) {
     matches = EXERCISES.filter(function(ex) {
       if (intensity === 'beginner' && ex.intensity === 'advanced') return false;
       return true;
@@ -350,6 +373,26 @@ function filterExercises(style, intensity, equipment, primaryFocus, secondaryFoc
   }
 
   return matches;
+}
+
+function assignDays(days, primaryFocus, secondaryFocus, seed) {
+  // Kept for backward compatibility
+  var FOCUS_SPLITS = {
+    push: { A:'push', B:'core' }, pull: { A:'pull', B:'core' },
+    legs: { A:'legs', B:'push' }, full_body: { A:'full_body', B:'core' },
+    core: { A:'core', B:'full_body' }, cardio: { A:'cardio', B:'full_body' }
+  };
+  var split = FOCUS_SPLITS[primaryFocus] || { A:primaryFocus, B:secondaryFocus };
+  var map = [];
+  for (var i = 0; i < 7; i++) map.push(null);
+  var patterns = { 3:[0,2,4], 4:[0,1,3,5], 5:[0,1,2,4,5], 6:[0,1,2,3,4,5], 7:[0,1,2,3,4,5,6] };
+  var slots = patterns[days] || patterns[5];
+  var focusCycle = [split.A, split.B, split.A, split.B, split.A, split.B, split.A];
+  var shuffledCycle = seededShuffle(focusCycle, seed);
+  slots.forEach(function(slot, si) {
+    map[slot] = { focus: shuffledCycle[si % shuffledCycle.length] };
+  });
+  return map;
 }
 
 var EQUIPMENT_LABELS = {

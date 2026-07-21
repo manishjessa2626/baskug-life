@@ -177,23 +177,18 @@ app.get('/api/workout/plan', auth, function(req, res) {
 app.post('/api/workout/plan/generate', auth, function(req, res) {
   try {
     var prefs = req.body.preferences || {};
+    var schedule = req.body.schedule || null;
     // Use user profile as fallback
     var userRow = db.prepare('SELECT age, gender, activity_level, weight FROM users WHERE id = ?').get(req.userId);
-    var intensity = prefs.intensity || 'intermediate';
-    if (userRow) {
-      if (userRow.activity_level === 'sedentary' && !prefs.intensity) intensity = 'beginner';
-      if (userRow.activity_level === 'very_active' && !prefs.intensity) intensity = 'advanced';
+    if (!prefs.intensity && userRow) {
+      if (userRow.activity_level === 'sedentary') prefs.intensity = 'beginner';
+      else if (userRow.activity_level === 'very_active') prefs.intensity = 'advanced';
     }
-    var planPrefs = {
-      goal: prefs.goal || 'general',
-      style: prefs.style || 'mixed',
-      intensity: intensity,
-      days_per_week: parseInt(prefs.days_per_week) || 5,
-      equipment: prefs.equipment || []
-    };
+    var planPrefs = { goal: prefs.goal || 'general', equipment: prefs.equipment || [] };
+    if (prefs.intensity) planPrefs.intensity = prefs.intensity;
     // Apply user-specific preferences to make plan unique
     var userSeed = req.userId * 7;
-    var plan = generatePlan(planPrefs, { userSeed: userSeed });
+    var plan = generatePlan(planPrefs, { userSeed: userSeed, schedule: schedule });
     setUserData(req.userId, 'baskug_workout_plan', plan);
     io.to('user:' + req.userId).emit('data-update', { key: 'baskug_workout_plan', value: plan });
     res.json(plan);

@@ -777,26 +777,22 @@ checkServer();
                 <option value="hypertrophy">🏋️ Muscle Growth</option>
                 <option value="endurance">🏃 Endurance</option>
               </select>
-              <select id="wp-style" style="width:100px;">
-                <option value="mixed">🔄 Mixed</option>
-                <option value="gym">🏋️ Gym</option>
-                <option value="bodyweight">🤸 Bodyweight</option>
-                <option value="pilates">🧘 Pilates</option>
-                <option value="yoga">🧘 Yoga</option>
-              </select>
               <select id="wp-intensity" style="width:110px;">
                 <option value="beginner">🌱 Beginner</option>
                 <option value="intermediate" selected>🔥 Intermediate</option>
                 <option value="advanced">💥 Advanced</option>
               </select>
-              <select id="wp-days" style="width:80px;">
-                <option value="3">3 days</option>
-                <option value="4">4 days</option>
-                <option value="5" selected>5 days</option>
-                <option value="6">6 days</option>
-                <option value="7">7 days</option>
-              </select>
               <button class="btn-sm" id="wp-gen-btn">Generate Plan</button>
+            </div>
+            <div style="margin-top:8px;font-size:0.75rem;color:var(--text-secondary);">Your Schedule — toggle days on/off and pick style per day:</div>
+            <div id="wp-day-grid" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">
+              <div class="wp-day-picker" data-day="monday" style="flex:1;min-width:90px;"><label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" checked><span>🌙 Mon</span></label><select class="wp-day-style" style="width:100%;font-size:0.7rem;margin-top:2px;padding:2px 4px;border:1px solid var(--border-primary);border-radius:4px;background:var(--page-primary);color:var(--text-strong);"><option value="mixed">Mixed</option><option value="gym" selected>🏋️ Gym</option><option value="home">🏠 Home</option></select></div>
+              <div class="wp-day-picker" data-day="tuesday" style="flex:1;min-width:90px;"><label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" checked><span>🔥 Tue</span></label><select class="wp-day-style" style="width:100%;font-size:0.7rem;margin-top:2px;padding:2px 4px;border:1px solid var(--border-primary);border-radius:4px;background:var(--page-primary);color:var(--text-strong);"><option value="mixed">Mixed</option><option value="gym" selected>🏋️ Gym</option><option value="home">🏠 Home</option></select></div>
+              <div class="wp-day-picker" data-day="wednesday" style="flex:1;min-width:90px;"><label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" checked><span>🌊 Wed</span></label><select class="wp-day-style" style="width:100%;font-size:0.7rem;margin-top:2px;padding:2px 4px;border:1px solid var(--border-primary);border-radius:4px;background:var(--page-primary);color:var(--text-strong);"><option value="mixed">Mixed</option><option value="gym" selected>🏋️ Gym</option><option value="home">🏠 Home</option></select></div>
+              <div class="wp-day-picker" data-day="thursday" style="flex:1;min-width:90px;"><label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" checked><span>🌿 Thu</span></label><select class="wp-day-style" style="width:100%;font-size:0.7rem;margin-top:2px;padding:2px 4px;border:1px solid var(--border-primary);border-radius:4px;background:var(--page-primary);color:var(--text-strong);"><option value="mixed">Mixed</option><option value="gym" selected>🏋️ Gym</option><option value="home">🏠 Home</option></select></div>
+              <div class="wp-day-picker" data-day="friday" style="flex:1;min-width:90px;"><label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" checked><span>🎉 Fri</span></label><select class="wp-day-style" style="width:100%;font-size:0.7rem;margin-top:2px;padding:2px 4px;border:1px solid var(--border-primary);border-radius:4px;background:var(--page-primary);color:var(--text-strong);"><option value="mixed">Mixed</option><option value="gym" selected>🏋️ Gym</option><option value="home">🏠 Home</option></select></div>
+              <div class="wp-day-picker" data-day="saturday" style="flex:1;min-width:90px;"><label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox"><span>🌟 Sat</span></label><select class="wp-day-style" style="width:100%;font-size:0.7rem;margin-top:2px;padding:2px 4px;border:1px solid var(--border-primary);border-radius:4px;background:var(--page-primary);color:var(--text-strong);"><option value="mixed">Mixed</option><option value="gym">🏋️ Gym</option><option value="home" selected>🏠 Home</option></select></div>
+              <div class="wp-day-picker" data-day="sunday" style="flex:1;min-width:90px;"><label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox"><span>☀️ Sun</span></label><select class="wp-day-style" style="width:100%;font-size:0.7rem;margin-top:2px;padding:2px 4px;border:1px solid var(--border-primary);border-radius:4px;background:var(--page-primary);color:var(--text-strong);"><option value="mixed">Mixed</option><option value="gym">🏋️ Gym</option><option value="home" selected>🏠 Home</option></select></div>
             </div>
           </div>
           <div id="wp-week">

@@ -2559,10 +2559,18 @@ function updateWorkoutPlanProgress() {
 function generateWorkoutPlan() {
   var prefs = {
     goal: document.getElementById('wp-goal').value,
-    style: document.getElementById('wp-style').value,
-    intensity: document.getElementById('wp-intensity').value,
-    days_per_week: parseInt(document.getElementById('wp-days').value)
+    intensity: document.getElementById('wp-intensity').value
   };
+
+  // Build per-day schedule from UI
+  var schedule = {};
+  DAYS.forEach(function(day) {
+    var picker = document.querySelector('.wp-day-picker[data-day="' + day + '"]');
+    if (!picker) { schedule[day] = { active: false, style: 'mixed' }; return; }
+    var active = picker.querySelector('input[type="checkbox"]').checked;
+    var style = picker.querySelector('.wp-day-style').value;
+    schedule[day] = { active: active, style: style };
+  });
 
   if (authToken) {
     // Server-side: syncs across devices
@@ -2571,7 +2579,7 @@ function generateWorkoutPlan() {
     fetch('/api/workout/plan/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-      body: JSON.stringify({ preferences: prefs })
+      body: JSON.stringify({ preferences: prefs, schedule: schedule })
     })
     .then(function(r) { return r.json(); })
     .then(function(plan) {
@@ -2592,7 +2600,7 @@ function generateWorkoutPlan() {
     });
   } else {
     // Client-side: works offline
-    var plan = wpGeneratePlan(prefs);
+    var plan = wpGeneratePlan(prefs, schedule);
     workoutPlan = plan;
     localStorage.setItem('baskug_workout_plan', JSON.stringify(plan));
     renderWorkoutPlan();

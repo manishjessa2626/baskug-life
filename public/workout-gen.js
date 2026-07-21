@@ -151,8 +151,9 @@ function wpFmtDate(d) {
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
-function wpGeneratePlan(prefs) {
+function wpGeneratePlan(prefs, schedule) {
   prefs = prefs || {};
+  schedule = schedule || {};
   var now = new Date();
   var weekStart = wpGetWeekStart(now);
   var weekEnd = new Date(weekStart);
@@ -162,33 +163,41 @@ function wpGeneratePlan(prefs) {
   var seed = isoWeek * 1000;
 
   var goal = prefs.goal || 'general';
-  var style = prefs.style || 'mixed';
-  var intensity = prefs.intensity || 'intermediate';
-  var daysPerWeek = Math.min(7, Math.max(1, parseInt(prefs.days_per_week)) || 5);
-
+  var globalIntensity = prefs.intensity || 'intermediate';
   var focusIdx = (isoWeek - 1) % WP_FOCUS_ROTATION.length;
   var primaryFocus = WP_FOCUS_ROTATION[focusIdx];
 
-  var dayMap = wpAssignDays(daysPerWeek, primaryFocus, seed);
-  var available = wpFilterExercises(style, intensity);
   var DAY_NAMES = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
   var plan = {};
 
-  dayMap.forEach(function(assign, idx) {
-    var dayName = DAY_NAMES[idx];
-    if (!assign) { plan[dayName] = []; return; }
+  DAY_NAMES.forEach(function(dayName, idx) {
+    var dayCfg = schedule[dayName] || { active: false, style: 'mixed' };
+    if (!dayCfg.active) { plan[dayName] = []; return; }
 
-    var focus = assign.focus;
-    var daySeed = seed + idx * 100;
+    var dayStyle = dayCfg.style || 'mixed';
+    var dayIntensity = dayCfg.intensity || globalIntensity;
+    var daySeed = seed + idx * 100 + (isoWeek * 7);
 
-    var dayExercises = available.filter(function(ex) {
-      return ex.focus === focus || ex.focus === 'full_body';
+    // For home style, rotate through balanced focuses
+    var homeFocuses = ['core', 'full_body', 'push', 'pull', 'legs'];
+    var dayFocus = dayCfg.focus || homeFocuses[(focusIdx + idx) % homeFocuses.length];
+
+    if (dayStyle === 'home') {
+      dayFocus = homeFocuses[(focusIdx + idx) % homeFocuses.length];
+    }
+
+    var dayExercises = wpFilterExercises(dayStyle, dayIntensity).filter(function(ex) {
+      return ex.focus === dayFocus || ex.focus === 'full_body';
     });
 
     if (dayExercises.length < 3) {
-      dayExercises = available.filter(function(ex) {
-        return ex.focus === focus || ex.focus === 'full_body' || ex.focus === 'core';
+      dayExercises = wpFilterExercises(dayStyle, dayIntensity).filter(function(ex) {
+        return ex.focus === dayFocus || ex.focus === 'full_body' || ex.focus === 'core';
       });
+    }
+
+    if (dayExercises.length < 3) {
+      dayExercises = wpFilterExercises('mixed', dayIntensity);
     }
 
     dayExercises = wpSeededShuffle(dayExercises, daySeed);
@@ -214,37 +223,112 @@ function wpGeneratePlan(prefs) {
     week_end: wpFmtDate(weekEnd),
     iso_week: isoWeek,
     focus: primaryFocus,
-    focus_label: WP_FOCUS_LABEL[primaryFocus],
+    focus_label: WP_FOCUS_LABEL[primaryFocus] || primaryFocus,
     generated_at: new Date().toISOString(),
     plan: plan,
-    preferences: prefs
+    preferences: prefs,
+    schedule: schedule
   };
-}
-
-function wpAssignDays(days, primaryFocus, seed) {
-  var splits = { push:'push', pull:'pull', legs:'legs', full_body:'full_body', core:'core', cardio:'cardio' };
-  var splitA = splits[primaryFocus] || primaryFocus;
-  var splitB = primaryFocus === 'cardio' ? 'full_body' : 'core';
-  var map = [];
-  for (var i = 0; i < 7; i++) map.push(null);
-  var patterns = { 3:[0,2,4], 4:[0,1,3,5], 5:[0,1,2,4,5], 6:[0,1,2,3,4,5], 7:[0,1,2,3,4,5,6] };
-  var slots = patterns[days] || patterns[5];
-  var focusCycle = [splitA, splitB, splitA, splitB, splitA, splitB, splitA];
-  var shuffledCycle = wpSeededShuffle(focusCycle, seed);
-  slots.forEach(function(slot, si) {
-    map[slot] = { focus: shuffledCycle[si % shuffledCycle.length] };
-  });
-  return map;
 }
 
 function wpFilterExercises(style, intensity) {
   return WP_EXERCISES.filter(function(ex) {
-    if (style === 'gym' && ex.style !== 'gym') return false;
-    if (style === 'bodyweight' && ex.style !== 'bodyweight') return false;
-    if (style === 'pilates' && ex.style !== 'pilates') return false;
-    if (style === 'yoga' && ex.style !== 'yoga') return false;
+    // Home style: bodyweight, pilates, yoga, or exercises with home-friendly equipment
+    if (style === 'home') {
+      var homeOk = ex.style === 'bodyweight' || ex.style === 'pilates' || ex.style === 'yoga';
+      if (!homeOk && ex.style === 'gym') {
+        homeOk = ex.equipment.every(function(eq) {
+          return ['Dumbbells','Resistance Bands','Jump Rope','Mat','Chair','Box','Bench'].indexOf(eq) >= 0;
+        });
+      }
+      if (!homeOk) return false;
+    } else {
+      if (style === 'gym' && ex.style !== 'gym') return false;
+      if (style === 'bodyweight' && ex.style !== 'bodyweight') return false;
+      if (style === 'pilates' && ex.style !== 'pilates') return false;
+      if (style === 'yoga' && ex.style !== 'yoga') return false;
+    }
     if (intensity === 'beginner' && ex.intensity === 'advanced') return false;
     if (intensity === 'intermediate' && ex.intensity === 'advanced') return false;
     return true;
   });
+}
+
+// Generate with per-day style schedule
+function wpGeneratePlanWithSchedule(prefs, schedule) {
+  prefs = prefs || {};
+  schedule = schedule || {};
+  var now = new Date();
+  var weekStart = wpGetWeekStart(now);
+  var weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+
+  var isoWeek = wpGetISOWeek(now);
+  var seed = isoWeek * 1000;
+
+  var goal = prefs.goal || 'general';
+  var globalIntensity = prefs.intensity || 'intermediate';
+  var focusIdx = (isoWeek - 1) % WP_FOCUS_ROTATION.length;
+  var primaryFocus = WP_FOCUS_ROTATION[focusIdx];
+
+  var DAY_NAMES = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+  var plan = {};
+
+  DAY_NAMES.forEach(function(dayName, idx) {
+    var dayCfg = schedule[dayName] || { active: false, style: 'mixed' };
+    if (!dayCfg.active) { plan[dayName] = []; return; }
+
+    var dayStyle = dayCfg.style || 'mixed';
+    var dayIntensity = dayCfg.intensity || globalIntensity;
+    var dayFocus = dayCfg.focus || primaryFocus;
+    var daySeed = seed + idx * 100 + (isoWeek * 7);
+
+    // For home style, use core/full_body/cardio focus more often
+    if (dayStyle === 'home') {
+      var homeFocuses = ['core', 'full_body', 'push', 'pull', 'legs'];
+      dayFocus = homeFocuses[(focusIdx + idx) % homeFocuses.length];
+    }
+
+    var dayExercises = wpFilterExercises(dayStyle, dayIntensity).filter(function(ex) {
+      return ex.focus === dayFocus || ex.focus === 'full_body';
+    });
+
+    if (dayExercises.length < 3) {
+      dayExercises = wpFilterExercises(dayStyle, dayIntensity).filter(function(ex) {
+        return ex.focus === dayFocus || ex.focus === 'full_body' || ex.focus === 'core';
+      });
+    }
+
+    if (dayExercises.length < 3) {
+      dayExercises = wpFilterExercises('mixed', dayIntensity);
+    }
+
+    dayExercises = wpSeededShuffle(dayExercises, daySeed);
+    var count = Math.min(6, Math.max(3, dayExercises.length));
+    var selected = dayExercises.slice(0, count);
+    var repScheme = WP_GOAL_REPS[goal] || WP_GOAL_REPS.general;
+
+    plan[dayName] = selected.map(function(ex, ei) {
+      return {
+        id: ex.id + '_' + idx + '_' + ei,
+        name: ex.name,
+        muscle: ex.muscle,
+        sets: wpSeededPick(repScheme.sets, daySeed + ei * 7),
+        reps: wpSeededPick(repScheme.reps, daySeed + ei * 13 + 3),
+        rest: wpSeededPick(repScheme.rest, daySeed + ei * 5 + 1),
+        equipment: ex.equipment,
+      };
+    });
+  });
+
+  return {
+    week_start: wpFmtDate(weekStart),
+    week_end: wpFmtDate(weekEnd),
+    iso_week: isoWeek,
+    focus: primaryFocus,
+    generated_at: new Date().toISOString(),
+    plan: plan,
+    preferences: prefs,
+    schedule: schedule
+  };
 }
