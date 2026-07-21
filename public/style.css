@@ -3622,6 +3622,11 @@ nav {
 .wp-ex-info { flex: 1; min-width: 0; }
 .wp-ex-name { font-size: 0.82rem; font-weight: 500; color: var(--text-strong); }
 .wp-ex-meta { font-size: 0.7rem; color: var(--text-secondary); margin-top: 2px; }
+.wp-sr-editor { display: inline-flex; align-items: center; gap: 2px; background: var(--page-primary); border: 1px solid var(--border-primary); border-radius: 6px; padding: 1px 3px; }
+.wp-sr-btn { background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 0.75rem; padding: 0 3px; line-height: 1; border-radius: 3px; font-family: inherit; }
+.wp-sr-btn:hover { background: var(--border-primary); color: var(--text-strong); }
+.wp-sr-val { font-weight: 600; color: var(--text-strong); min-width: 12px; text-align: center; font-size: 0.72rem; }
+.wp-sr-x { color: var(--text-secondary); font-size: 0.65rem; margin: 0 1px; }
 .wp-ex-eq { color: var(--primary, #7C5CFC); font-weight: 500; }
 .demo-link { font-size: 0.7rem; color: var(--primary, #7C5CFC); cursor: pointer; text-decoration: underline; }
 

@@ -2449,7 +2449,7 @@ function renderWorkoutPlan() {
       html += dayEx.map(function(ex, i) {
         var checked = workoutDone && workoutDone[p.week_start] && workoutDone[p.week_start][d] && workoutDone[p.week_start][d][ex.id] ? 'checked' : '';
         var eq = ex.equipment && ex.equipment.length > 0 ? ' · <span class="wp-ex-eq">' + escHtml(ex.equipment.join(', ')) + '</span>' : '';
-        return '<div class="wp-ex"><label class="wp-ex-check' + (checked ? ' done' : '') + '"><input type="checkbox" data-week="' + p.week_start + '" data-day="' + d + '" data-exid="' + ex.id + '" ' + checked + '><span class="wp-ex-num">' + (i+1) + '</span></label><div class="wp-ex-info"><div class="wp-ex-name">' + escHtml(ex.name) + '</div><div class="wp-ex-meta">' + ex.sets + '×' + ex.reps + ' · ' + ex.muscle + ' · ' + ex.rest + 's rest' + eq + '</div></div></div>';
+        return '<div class="wp-ex"><label class="wp-ex-check' + (checked ? ' done' : '') + '"><input type="checkbox" data-week="' + p.week_start + '" data-day="' + d + '" data-exid="' + ex.id + '" ' + checked + '><span class="wp-ex-num">' + (i+1) + '</span></label><div class="wp-ex-info"><div class="wp-ex-name">' + escHtml(ex.name) + '</div><div class="wp-ex-meta"><span class="wp-sr-editor" data-week="' + p.week_start + '" data-day="' + d + '" data-exid="' + ex.id + '"><button class="wp-sr-btn wp-sr-minus" data-target="sets">−</button><span class="wp-sr-val" data-field="sets">' + ex.sets + '</span><span class="wp-sr-x">×</span><button class="wp-sr-btn wp-sr-minus" data-target="reps">−</button><span class="wp-sr-val" data-field="reps">' + ex.reps + '</span><button class="wp-sr-btn wp-sr-plus" data-target="reps">+</button><button class="wp-sr-btn wp-sr-plus" data-target="sets">+</button></span> · ' + ex.muscle + ' · ' + ex.rest + 's rest' + eq + '</div></div></div>';
       }).join('');
     }
     html += '</div></div>';
@@ -2490,6 +2490,34 @@ function renderWorkoutPlan() {
         apiPut('baskug_workout_done', workoutDone);
       }
       updateWorkoutPlanProgress();
+    });
+  });
+
+  // Sets/Reps adjust
+  container.querySelectorAll('.wp-sr-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var editor = this.closest('.wp-sr-editor');
+      var week = editor.dataset.week;
+      var day = editor.dataset.day;
+      var exId = editor.dataset.exid;
+      var target = this.dataset.target;
+      var valSpan = editor.querySelector('.wp-sr-val[data-field="' + target + '"]');
+      var val = parseInt(valSpan.textContent);
+      var delta = this.classList.contains('wp-sr-plus') ? 1 : -1;
+      var newVal = Math.max(1, val + delta);
+      if (target === 'reps') newVal = Math.max(1, Math.min(50, newVal));
+      if (target === 'sets') newVal = Math.max(1, Math.min(20, newVal));
+      valSpan.textContent = newVal;
+      // Save to workoutPlan data
+      if (workoutPlan && workoutPlan.plan && workoutPlan.plan[day]) {
+        var ex = workoutPlan.plan[day].find(function(e) { return e.id === exId; });
+        if (ex) {
+          if (target === 'sets') ex.sets = newVal;
+          if (target === 'reps') ex.reps = newVal;
+          localStorage.setItem('baskug_workout_plan', JSON.stringify(workoutPlan));
+        }
+      }
     });
   });
 
