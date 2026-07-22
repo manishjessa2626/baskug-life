@@ -320,42 +320,22 @@ function enterApp() {
 // ===== PROFILE =====
 function saveProfile(e) {
   e.preventDefault();
-  var newName = document.getElementById('profile-name').value.trim();
   var newGender = document.getElementById('profile-gender').value;
-  var newAge = document.getElementById('profile-age').value;
 
-  if (!newName) { alert('Please enter your name.'); return; }
-  if (!newGender) { alert('Please select your gender — it personalises your dashboard.'); return; }
+  if (!newGender) { alert('Please select your gender to personalize your dashboard.'); return; }
 
-  // Check if switching to a different person (non-authed users share localStorage)
-  var oldName = user.name || '';
-  var hasExistingData = localStorage.getItem('baskug_workouts') || localStorage.getItem('baskug_meals') || localStorage.getItem('baskug_workout_plan');
-  if (!authToken && oldName && oldName !== newName && hasExistingData) {
-    if (!confirm('This will clear all existing data (' + oldName + '\'s logs, meals, workouts, etc.) and start fresh for ' + newName + '. Continue?')) {
-      return;
-    }
-    // Clear all user data from localStorage
-    var keys = ['baskug_schedule','baskug_work','baskug_meals','baskug_workouts','baskug_routines','baskug_routine_log','baskug_hobbies','baskug_symptoms','baskug_mealplan','baskug_workout_plan','baskug_workout_done'];
-    keys.forEach(function(k) { localStorage.removeItem(k); });
-    mealsData = {}; workoutData = {}; routineData = []; routineDone = {};
-    hobbyData = []; symptomsData = {}; schedule = {}; workSchedule = {};
-    workoutPlan = null; workoutDone = {};
-  }
-
-  user.name = newName;
+  user.name = user.name || (firebaseUserCache ? firebaseUserCache.displayName : '') || 'there';
   user.gender = newGender;
-  user.age = newAge;
   user.createdAt = user.createdAt || new Date().toISOString();
 
   setGenderTheme(user.gender);
   saveUser();
-  // If authed, also save to API
   if (authToken) {
     fetch('/api/user/profile', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
       body: JSON.stringify({
-        name: user.name, gender: user.gender, age: user.age
+        name: user.name, gender: user.gender, age: user.age || 0
       })
     }).catch(function() {});
   }
@@ -363,9 +343,7 @@ function saveProfile(e) {
 }
 
 function fillProfile() {
-  document.getElementById('profile-name').value = user.name || '';
   document.getElementById('profile-gender').value = user.gender || '';
-  document.getElementById('profile-age').value = user.age || '';
 }
 
 // ===== DASHBOARD =====
@@ -3037,8 +3015,9 @@ function initTheme() {
   });
 }
 
-// ===== FIREBASE AUTH SYSTEM (Phone + Google) =====
+// ===== FIREBASE AUTH SYSTEM (Google + Phone) =====
 var authConfirmResult = null;
+var GOOGLE_CLIENT_ID = '513566608550-3bk20c25itpt57eut33rs5d6duje236i.apps.googleusercontent.com';
 
 function showAuthStep(step) {
   document.getElementById('auth-step-methods').classList.toggle('hidden', step !== 'methods');
@@ -3057,52 +3036,31 @@ function showAuthError(msg) {
   el.style.display = msg ? 'block' : 'none';
 }
 
-function firebaseEmailSignIn() {
+function firebaseGoogleSignIn() {
   showAuthError('');
-  var email = document.getElementById('auth-email').value.trim();
-  var pw = document.getElementById('auth-password').value.trim();
-  if (!email) { showAuthError('Enter your email address.'); return; }
-  if (!pw) { showAuthError('Enter your password.'); return; }
-
-  var btn = document.getElementById('btn-auth-login');
-  btn.disabled = true; btn.textContent = '⏳ Signing in...';
-
-  firebase.auth().signInWithEmailAndPassword(email, pw)
-    .then(function() {
-      hideOverlay('view-auth');
-      btn.disabled = false; btn.textContent = 'Sign In';
-    })
-    .catch(function(e) {
-      showAuthError(firebaseAuthErrorMessage(e));
-      btn.disabled = false; btn.textContent = 'Sign In';
-    });
+  if (!window.google || !google.accounts || !google.accounts.oauth2) {
+    showAuthError('Google sign-in is still loading. Please try again.');
+    return;
+  }
+  google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: 'openid email profile',
+    callback: function(response) {
+      if (response.access_token) {
+        var credential = firebase.auth.GoogleAuthProvider.credential(null, response.access_token);
+        firebase.auth().signInWithCredential(credential)
+          .then(function() {
+            hideOverlay('view-auth');
+          })
+          .catch(function(e) {
+            showAuthError(firebaseAuthErrorMessage(e));
+          });
+      } else if (response.error) {
+        showAuthError('Google sign-in failed: ' + response.error);
+      }
+    }
+  }).requestAccessToken();
 }
-
-function firebaseEmailSignUp() {
-  showAuthError('');
-  var email = document.getElementById('auth-email').value.trim();
-  var pw = document.getElementById('auth-password').value.trim();
-  if (!email) { showAuthError('Enter your email address.'); return; }
-  if (!pw) { showAuthError('Create a password (6+ characters).'); return; }
-  if (pw.length < 6) { showAuthError('Password must be at least 6 characters.'); return; }
-
-  var btn = document.getElementById('btn-auth-signup');
-  btn.disabled = true; btn.textContent = '⏳ Creating account...';
-
-  firebase.auth().createUserWithEmailAndPassword(email, pw)
-    .then(function(result) {
-      // Send verification email
-      result.user.sendEmailVerification().catch(function(e) { console.warn('Verify email failed:', e); });
-      hideOverlay('view-auth');
-      btn.disabled = false; btn.textContent = 'Sign Up';
-    })
-    .catch(function(e) {
-      showAuthError(firebaseAuthErrorMessage(e));
-      btn.disabled = false; btn.textContent = 'Sign Up';
-    });
-}
-
-function firebasePhoneSignIn() {
   var codeEl = document.getElementById('auth-phone-code');
   var phoneEl = document.getElementById('auth-phone-input');
   var fullPhone = codeEl.value + phoneEl.value.trim();
@@ -3147,23 +3105,9 @@ function firebaseVerifyCode() {
     });
 }
 
-function firebaseGoogleSignIn() {
-  showAuthError('');
-  var provider = new firebase.auth.GoogleAuthProvider();
-  // Use redirect instead of popup to avoid cross-origin postMessage issues
-  firebase.auth().signInWithRedirect(provider);
-}
-
 function firebaseAuthErrorMessage(e) {
   var code = e.code || '';
   var map = {
-    'auth/user-not-found': 'No account found with this email.',
-    'auth/wrong-password': 'Incorrect password.',
-    'auth/invalid-credential': 'Invalid email or password.',
-    'auth/email-already-in-use': 'An account with this email already exists.',
-    'auth/weak-password': 'Password must be at least 6 characters.',
-    'auth/invalid-email': 'Invalid email address.',
-    'auth/too-many-requests': 'Too many attempts. Please try again later.',
     'auth/network-request-failed': 'Network error. Check your connection.',
     'auth/popup-closed-by-user': 'Sign-in cancelled.',
     'auth/cancelled-popup-request': 'Sign-in cancelled.',
@@ -3171,10 +3115,7 @@ function firebaseAuthErrorMessage(e) {
     'auth/too-many-requests-phone': 'Too many SMS requests. Please try again later.',
     'auth/quota-exceeded': 'SMS quota exceeded. Please try again later.',
     'auth/code-expired': 'Verification code expired. Please request a new one.',
-    'auth/invalid-verification-code': 'Invalid verification code. Please check and try again.',
-    'auth/missing-email': 'Please enter your email address.',
-    'auth/missing-password': 'Please enter your password.',
-    'auth/operation-not-allowed': 'Email/password sign-in is not enabled. Please use Google sign-in.'
+    'auth/invalid-verification-code': 'Invalid verification code. Please check and try again.'
   };
   return map[code] || e.message || 'Authentication failed.';
 }
@@ -3206,15 +3147,9 @@ function onFirebaseAuth(firebaseUser) {
   if (firebaseUser) {
     firebaseUserCache = firebaseUser;
     user.email = firebaseUser.email;
-
-    // For email/password users, require email verification
-    var isEmailUser = firebaseUser.providerData && firebaseUser.providerData.some(function(p) { return p.providerId === 'password'; });
-    if (isEmailUser && !firebaseUser.emailVerified) {
-      showOverlay('view-verify');
-      document.getElementById('verify-email').textContent = firebaseUser.email || '';
-      hideOverlay('view-auth');
-      firebaseUserResolve();
-      return;
+    // Auto-fill name from Google profile if available
+    if (!user.name && firebaseUser.displayName) {
+      user.name = firebaseUser.displayName;
     }
     firebaseUser.getIdToken().then(function(token) {
       authToken = token;
@@ -3288,19 +3223,6 @@ document.addEventListener('DOMContentLoaded', function() {
   loadAll();
   bodyLock();
 
-  // Handle redirect result (signInWithRedirect returns to this page)
-  firebase.auth().getRedirectResult().then(function(result) {
-    if (result && result.user) {
-      hideOverlay('view-auth');
-    }
-  }).catch(function(e) {
-    var silent = ['auth/popup-closed-by-user','auth/user-cancelled','auth/cancelled-popup-request','auth/credential-already-in-use','auth/email-change-needs-verification'];
-    var code = e.code || '';
-    if (silent.indexOf(code) === -1) {
-      console.warn('Redirect result error:', e.code);
-    }
-  });
-
   // Firebase auth state listener (onIdTokenChanged also fires on token refresh)
   firebase.auth().onIdTokenChanged(function(user) {
     if (user) {
@@ -3347,49 +3269,6 @@ document.addEventListener('DOMContentLoaded', function() {
     showAuthStep('phone');
     showAuthError('');
     authConfirmResult = null;
-  });
-
-  // Email/password sign-in
-  safeListen('btn-auth-login', 'click', firebaseEmailSignIn);
-  safeListen('btn-auth-signup', 'click', firebaseEmailSignUp);
-
-  // Enter key on password field triggers sign-in
-  safeListen('auth-password', 'keydown', function(e) {
-    if (e.key === 'Enter') firebaseEmailSignIn();
-  });
-  safeListen('auth-email', 'keydown', function(e) {
-    if (e.key === 'Enter') document.getElementById('auth-password').focus();
-  });
-
-  // Email verification
-  safeListen('btn-verify-resend', 'click', function() {
-    var user = firebase.auth().currentUser;
-    if (user) {
-      user.sendEmailVerification().then(function() {
-        document.getElementById('verify-message').textContent = '✅ Verification email resent! Check your inbox.';
-      }).catch(function(e) {
-        document.getElementById('verify-message').textContent = '❌ Failed to send: ' + (e.message || 'try again');
-      });
-    }
-  });
-  safeListen('btn-verify-check', 'click', function() {
-    var user = firebase.auth().currentUser;
-    if (user) {
-      user.reload().then(function() {
-        if (user.emailVerified) {
-          hideOverlay('view-verify');
-          onFirebaseAuth(user);
-        } else {
-          document.getElementById('verify-message').textContent = '⚠️ Email not yet verified. Check your inbox and click the link.';
-        }
-      }).catch(function() {
-        document.getElementById('verify-message').textContent = '⚠️ Could not check verification status. Try again.';
-      });
-    }
-  });
-  safeListen('btn-verify-logout', 'click', function() {
-    firebase.auth().signOut().catch(function() {});
-    hideOverlay('view-verify');
   });
 
   // Auth skip (continue without account)
